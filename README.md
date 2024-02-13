@@ -21,6 +21,8 @@ powerview.wait()
 ## Release Notes
 ### v*
 * use binaries from `PATH` if no system_path is specified
+* gently stop Trace32 on Windows OS
+* added timeout for `PowerView.stop()`
 
 ### v0.1.7
 * fix datatype of `library_file` parameters in some Connection classes to allow `pathlib.Path`'s.

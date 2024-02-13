@@ -90,6 +90,7 @@ class PowerView:
         self.screen: Optional[bool] = None
         """If ``False`` the main window of TRACE32 and all other dialogs and windows of TRACE32 remain hidden - even if
         an error occurs. If ``None`` the global default is used."""
+        self._screen_off: bool = False
         self.title: str = ""
         """Sets the window title of the TRACE32 instance."""
         self.font_size: Optional[FontSize] = None
@@ -168,27 +169,60 @@ class PowerView:
             else:
                 cmd.extend(self.startup_parameter)
 
-        self._process = subprocess.Popen(cmd, env=os.environ)
+        self._process = subprocess.Popen(cmd, env=os.environ, stdin=subprocess.PIPE)
         time.sleep(delay)
 
     def wait(self, timeout: Optional[float] = None) -> None:
         """wait for process to terminate
 
         Args:
-            Timeout: optional timeout in seconds.
+            timeout: optional timeout in seconds.
+
+        Raises:
+            subprocess.TimeoutExpired: on timeout
         """
         if self._process:
             self._process.wait(timeout)
 
-    def stop(self) -> None:
-        """terminates the process
+    def stop(self, timeout: Optional[float] = None) -> None:
+        """stops the process gently
 
-        After stopping a PowerView instance running with a hardware based connection, the hardware must be power cycled
-        before connecting again. Alternatively, to stop TRACE32 click the close button in the GUI or execute command
-        "QUIT" within TRACE32.
+        This function blocks until the process is stoppped.
+
+        Args:
+            timeout: optional timeout in seconds. If `None` wait for an infinite amount of time. Default is `None`.
+
+        Raises:
+            subprocess.TimeoutExpired: on timeout
         """
-        if self._process:
+        if self._process is None:
+            return
+
+        if platform.system() == "Windows":
+            if self._screen_off:
+                self._process.communicate(input=b"quit\n", timeout=timeout)
+            else:
+                import ctypes
+
+                @ctypes.WINFUNCTYPE(ctypes.c_long, ctypes.c_ulong, ctypes.c_long)
+                def close_message_to_t32(hwnd, _):  # type: ignore
+                    hwnd = ctypes.c_ulong(hwnd)
+                    window_pid = ctypes.c_longlong()
+                    ctypes.windll.user32.GetWindowThreadProcessId(hwnd, ctypes.byref(window_pid))
+                    GW_OWNER = 4
+                    if (
+                        window_pid.value == self._process.pid  # type: ignore
+                        and ctypes.windll.user32.GetWindow(hwnd, GW_OWNER) == 0
+                        and ctypes.windll.user32.IsWindowVisible(hwnd)
+                    ):
+                        WM_CLOSE = 0x0010
+                        ctypes.windll.user32.PostMessageA(hwnd, WM_CLOSE, 0, 0)
+                    return 1
+
+                ctypes.windll.user32.EnumWindows(close_message_to_t32, None)
+        else:
             self._process.terminate()
+        self._process.wait(timeout)
 
     def get_pid(self) -> Optional[int]:
         """Returns the process id
@@ -358,7 +392,8 @@ class PowerView:
             return ""
 
     def _get_config_string_screen(self) -> str:
-        if self.screen is False or (self.screen is None and defaults.screen is False):
+        self._screen_off = self.screen is False or (self.screen is None and defaults.screen is False)
+        if self._screen_off:
             return "SCREEN=OFF"
         args = ["SCREEN="]
 
