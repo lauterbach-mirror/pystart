@@ -4,6 +4,7 @@ import os
 import pathlib
 import platform
 import shlex
+import shutil
 import subprocess
 import tempfile
 import time
@@ -15,12 +16,10 @@ PathType = Union[str, pathlib.Path]
 __all__ = ["PowerView", "Connection", "T32Interface"]
 
 
-_PATH_OS_SPECIFIC = {
-    # OS     : ( 64-bit exe , 32-bit exe  )
-    "Windows": ("windows64", "windows"),
-    "Linux": ("pc_linux64", "pc_linux64"),
-    "Darwin": ("macosx64", "macosx64"),
-    # TODO: Solaris SUN
+_BIN_SUBFOLDER = {
+    "Windows": "windows",
+    "Linux": "pc_linux64",
+    "Darwin": "macosx64",
 }
 
 
@@ -72,8 +71,8 @@ class PowerView:
         """
         self.force_32bit_executable: Optional[bool] = None
         """If set, pystart will start the 32-bit executable located under ``bin/windows`` instead of the 64-bit
-        executable located under ``bin/windows64``. This could be e.g. needed if a 32-bit DLL has to be loaded in
-        TRACE32 PowerView."""
+        executable located under ``bin/windows64`` if the executable is derived from system_path. This could be e.g.
+        needed if a 32-bit DLL has to be loaded in TRACE32 PowerView."""
         # rlm license
         self.rlm_port: int = 5055
         """The Floating License Client (RLM Client) needs to know which (RLM) port number should be used to get the
@@ -217,30 +216,36 @@ class PowerView:
         if not self.target:
             raise ValueError("no target specified")
 
-        env_system_path = os.environ.get("T32SYS")
-        if self.system_path:
-            current_system_path = pathlib.Path(self.system_path)
-        elif defaults.system_path:
-            current_system_path = pathlib.Path(defaults.system_path)
-        elif env_system_path:
-            current_system_path = pathlib.Path(env_system_path)
-        elif platform.system() == "Windows":
-            current_system_path = pathlib.Path(r"C:\T32")
-        else:
-            raise ValueError("no system_path specified")
-
         system = platform.system()
-        sys_specific = _PATH_OS_SPECIFIC[system][
-            self.force_32bit_executable if self.force_32bit_executable is not None else defaults.force_32bit_executable
-        ]
-        extension = ".exe" if system == "Windows" else ""
-        executable = f"{self.target}{extension}"
+        system_path = self.system_path or defaults.system_path or os.environ.get("T32SYS")
 
-        path = current_system_path.joinpath("bin", sys_specific, executable)
-        if not path.exists():
-            sys_specific = _PATH_OS_SPECIFIC[system][True]  # Force 32-bit executable
-            path = current_system_path.joinpath("bin", sys_specific, executable)
-        return path
+        if not system_path:
+            executable = shutil.which(self.target)
+            if executable:
+                return pathlib.Path(executable)
+
+            if system == "Windows":
+                system_path = r"C:\T32"
+            elif system == "Linux":
+                system_path = "/opt/t32"
+            else:
+                raise ValueError("no system_path specified")
+
+        sys_specific = _BIN_SUBFOLDER[system]
+        extension = ""
+
+        if system == "Windows":
+            extension = ".exe"
+            if not self.force_32bit_executable:
+                sys_specific += "64"
+
+        path = pathlib.Path(system_path, "bin", sys_specific, f"{self.target}{extension}")
+        if path.exists():
+            return path
+
+        if system == "Windows" and not self.force_32bit_executable:
+            sys_specific = _BIN_SUBFOLDER[system]
+        return pathlib.Path(system_path, "bin", sys_specific, f"{self.target}{extension}")
 
     def add_interface(self, interface: "T32Interface") -> "T32Interface":
         """Add a interface for inter-process communication
