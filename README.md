@@ -5,5 +5,10 @@ lauterbach-trace32-pystart module (pystart) which allows the configuration and s
 For feedback and questions, please contact support@lauterbach.com (include "pystart" in the subject).
 
 ## Release Notes
-### v0.*
-before initial release
+### v0.1.7
+* fix datatype of `library_file` parameters in some Connection classes to allow `pathlib.Path`'s.
+* add `TCPConnection` for Lauterbach X-Series debugger.
+* rename `EthernetConnection` to `UDPConnection`
+
+### v0.1.6
+* initial release

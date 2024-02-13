@@ -1,8 +1,8 @@
 from util import show_configuration
 
-from lauterbach.trace32.pystart import EthernetConnection, PowerView
+from lauterbach.trace32.pystart import PowerView, UDPConnection
 
-connection = EthernetConnection("<URI of Debugger>")
+connection = UDPConnection("<URI of Debugger>")
 
 powerview = PowerView(connection, "t32marm")
 

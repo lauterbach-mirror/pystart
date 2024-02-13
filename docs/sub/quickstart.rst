@@ -52,7 +52,7 @@ Minimal ethernet debugger example
 	# pointing to the installation directory of TRACE32 add following line:
 	# pystart.defaults.system_path = "</path/to/TRACE32/installation>"
 
-	connection = pystart.EthernetConnection("<IP address or DNS name of the debugger>")
+	connection = pystart.UDPConnection("<IP address or DNS name of the debugger>")
 	pv = pystart.PowerView(connection, "t32marm")
 	pv.start()
 	pv.wait()

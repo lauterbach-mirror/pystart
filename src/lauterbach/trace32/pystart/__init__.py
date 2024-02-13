@@ -1,10 +1,9 @@
-from .__version__ import __version__
+from .__version__ import __version__  # noqa: F401
 from ._connection import (
     ARCINTConnection,
     CADIConnection,
     CitrixConnection,
     ConnectMode,
-    EthernetConnection,
     GDBConnection,
     GDIConnection,
     HostConnection,
@@ -17,6 +16,8 @@ from ._connection import (
     SerialRomMonitorConnection,
     SIMTSIConnection,
     SimulatorConnection,
+    TCPConnection,
+    UDPConnection,
     USBConnection,
     USBProxyConnection,
 )
@@ -35,7 +36,7 @@ __all__ = [
     # _connection
     "ConnectMode",
     "USBConnection",
-    "EthernetConnection",
+    "UDPConnection",
     "CitrixConnection",
     "USBProxyConnection",
     "MCIServerConnection",
@@ -52,6 +53,7 @@ __all__ = [
     "MDIConnection",
     "SCSConnection",
     "SIMTSIConnection",
+    "TCPConnection",
     # _settings
     "T32License",
     "T32Screen",

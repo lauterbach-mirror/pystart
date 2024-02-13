@@ -6,12 +6,12 @@ from typing import TYPE_CHECKING, List, Optional
 from ._powerview import Connection
 
 if TYPE_CHECKING:
-    from ._powerview import PowerView
+    from ._powerview import PathType, PowerView
 
 __all__ = [
     "ConnectMode",
     "USBConnection",
-    "EthernetConnection",
+    "UDPConnection",
     "CitrixConnection",
     "USBProxyConnection",
     "MCIServerConnection",
@@ -28,6 +28,7 @@ __all__ = [
     "MDIConnection",
     "SCSConnection",
     "SIMTSIConnection",
+    "TCPConnection",
 ]
 
 
@@ -167,8 +168,8 @@ class USBConnection(_PBIConnection):
 
 
 @dataclass
-class EthernetConnection(_PBIConnection):
-    """Connection class for Ethernet hardware debugger.
+class UDPConnection(_PBIConnection):
+    """Connection class for ethernet hardware debugger via UDP.
 
     This Connection is a subtype of PBIConnection.
     """
@@ -197,9 +198,7 @@ class EthernetConnection(_PBIConnection):
         super().__init__()
 
     def _get_connection_config(self) -> str:
-        args = ["PBI=", "NET"]
-        if self.node_name:
-            args.append(f"NODE={self.node_name}")
+        args = ["PBI=", "NET", f"NODE={self.node_name}"]
         if self.port:
             args.append(f"PORT={self.port}")
         if self.host_port:
@@ -212,6 +211,54 @@ class EthernetConnection(_PBIConnection):
             args.append("COMPRESS")
         if self.delay:
             args.append(f"DELAY={self.delay}")
+        if self.connect_mode != ConnectMode.NORMAL:
+            args.append(f"CONNECTIONMODE={self.connect_mode.name}")
+        return "\n".join(args)
+
+    def _get_config_string(self, power_view: "PowerView") -> str:
+        args = [self._get_connection_config()]
+        index = self._get_core_num(power_view)
+        if self.exclusive:
+            if index != 0:
+                raise ValueError("GUI index too high to generate config files using exclusive mode!")
+            args.append("CORE=0")
+        if index > 0:
+            args.append(f"CORE={index}")
+        pbi_string = self._get_pbi_string(power_view)
+        if pbi_string:
+            args.append(pbi_string)
+
+        return "\n".join(args)
+
+
+@dataclass
+class TCPConnection(_PBIConnection):
+    """Connection class for ethernet hardware debugger via TCP.
+
+    This Connection is a subtype of PBIConnection and is only available for debugger from the X-Series.
+    """
+
+    node_name: str
+    """The key value specifies the node name of the PowerDebug device to connect to. This should be either a DNS
+    name or an IP address."""
+    port: int = 0
+    """TCP Port to which PowerView should send its packets. If 0, a default port is used."""
+    compression: bool = False
+    """If ``True`` reduces the packet size by compression."""
+    connect_mode: ConnectMode = ConnectMode.NORMAL
+    """Specify reaction if debugger is already in use."""
+    exclusive: bool = False
+    """Tells TRACE32 that there can be only one TRACE32 PowerView instance to connect."""
+
+    def __post_init__(self) -> None:
+        super().__init__()
+
+    def _get_connection_config(self) -> str:
+        args = ["PBI=", "NETTCP", f"NODE={self.node_name}"]
+        if self.port:
+            args.append(f"PORT={self.port}")
+        if self.compression:
+            args.append("COMPRESS")
         if self.connect_mode != ConnectMode.NORMAL:
             args.append(f"CONNECTIONMODE={self.connect_mode.name}")
         return "\n".join(args)
@@ -331,7 +378,8 @@ class SimulatorConnection(_SingleConnection):
 
     Available are:
         ``USBConnection``
-        ``EthernetConnection``
+        ``UDPConnection``
+        ``TCPConnection``
         ``CitrixConnection``
         ``USBProxyConnection``
     """
@@ -395,7 +443,7 @@ class MCDConnection(_SingleConnection):
 
     Refer to “Virtual Targets User’s Guide” (virtual_targets.pdf) for more information."""
 
-    library_file: str
+    library_file: "PathType"
     """Required library file.
 
     Please contact the manufacturer of the virtual target for the required .dll file.
@@ -407,7 +455,7 @@ class MCDConnection(_SingleConnection):
     def _get_config_string(self, power_view: "PowerView") -> str:
         arg = "PBI=MCD"
         if self.library_file:
-            arg = " ".join([arg, self.library_file])
+            arg = " ".join([arg, str(self.library_file)])
         return arg
 
 
@@ -415,7 +463,7 @@ class MCDConnection(_SingleConnection):
 class CADIConnection(_SingleConnection):
     """Arm Cycle Accurate Debug Interface CADI."""
 
-    library_file: str = ""
+    library_file: "PathType" = ""
     """Optional library file.
 
     The library file is provided by Lauterbach and is installed together with TRACE32. Specifying a library file
@@ -428,7 +476,7 @@ class CADIConnection(_SingleConnection):
     def _get_config_string(self, power_view: "PowerView") -> str:
         arg = "PBI=CADI"
         if self.library_file:
-            arg = " ".join([arg, self.library_file])
+            arg = " ".join([arg, str(self.library_file)])
         return arg
 
 
@@ -438,7 +486,7 @@ class IRISConnection(_SingleConnection):
 
     Refer to “Virtual Targets User’s Guide” (virtual_targets.pdf) for more information."""
 
-    library_file: str = ""
+    library_file: "PathType" = ""
     """Optional library file.
 
     The library file is provided by Lauterbach and is installed together with TRACE32. Specifying a library file
@@ -451,7 +499,7 @@ class IRISConnection(_SingleConnection):
     def _get_config_string(self, power_view: "PowerView") -> str:
         arg = "PBI=IRIS"
         if self.library_file:
-            arg = " ".join([arg, self.library_file])
+            arg = " ".join([arg, str(self.library_file)])
         return arg
 
 
@@ -473,7 +521,7 @@ class GDIConnection(_SingleConnection):
 
     Refer to “Virtual Targets User’s Guide” (virtual_targets.pdf) for more information."""
 
-    library_file: str = ""
+    library_file: "PathType" = ""
     """Required library file.
 
     Please contact the manufacturer of the virtual target for the required .dll file."""
@@ -484,7 +532,7 @@ class GDIConnection(_SingleConnection):
     def _get_config_string(self, power_view: "PowerView") -> str:
         arg = "PBI=GDI"
         if self.library_file:
-            arg = " ".join([arg, self.library_file])
+            arg = " ".join([arg, str(self.library_file)])
         return arg
 
 
