@@ -1,0 +1,11 @@
+# see https://flake8.pycqa.org/en/latest/user/options.html
+
+[flake8]
+max-line-length = 120
+extend-ignore = E203
+exclude =
+    .git/*,
+    .venv*/*,
+    build/*,
+    dist/*,
+    docs/*

@@ -1,0 +1,16 @@
+# keep sorted
+black
+build
+flake8
+isort
+lauterbach-trace32-rcl
+mypy
+pre-commit
+python-dotenv
+setuptools
+sphinx
+sphinx_rtd_theme
+twine
+types-setuptools
+wheel
+-e .
