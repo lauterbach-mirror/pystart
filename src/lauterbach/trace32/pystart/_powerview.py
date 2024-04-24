@@ -7,9 +7,16 @@ import shlex
 import shutil
 import subprocess
 import tempfile
-import time
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Iterable, List, Optional, Union
+
+from ._wait_started import (
+    _WaitStarted,
+    _WaitStartedConsoleLinux,
+    _WaitStartedConsoleWindows,
+    _WaitStartedDelay,
+    _WaitStartedWindowsSignal,
+)
 
 PathType = Union[str, pathlib.Path]
 
@@ -133,15 +140,19 @@ class PowerView:
         if self._config_file_name:
             os.remove(self._config_file_name)
 
-    def start(self, *, delay: float = 6.0) -> None:
+    def start(self, *, timeout: float = 20.0, delay: Optional[float] = None) -> None:
         """start the powerview executable as a process
 
         Args:
-            delay: time to wait for complete start of PowerView
+            timeout: timeout for complete start of TRACE32 in seconds. (default=20.0)
+            delay: (deprecated) time to wait for complete start of PowerView. If parameter is not `None` timeout is
+                    ignored. For TRACE32 installations with a build number below 166336 please set `delay` parameter to
+                    an appropriate number.
 
         Raises:
             FileNotFoundError: if the executable can not be found within the specified path
             RuntimeError: if process is already running
+            RuntimeError: on timeout
         """
         if self._process and self._process.poll() is None:
             raise RuntimeError("PowerView instance is already running")
@@ -157,7 +168,7 @@ class PowerView:
         self._config_file_name = config_file.name
 
         # start program
-        cmd = [str(self.executable)]
+        cmd = [str(self.executable), "--t32-bootstatus"]
         if self.startup_script and self.safe_start:
             cmd.append("--t32-safestart")
         cmd.extend(["-c", self._config_file_name])
@@ -169,8 +180,20 @@ class PowerView:
             else:
                 cmd.extend(self.startup_parameter)
 
-        self._process = subprocess.Popen(cmd, env=os.environ, stdin=subprocess.PIPE)
-        time.sleep(delay)
+        if delay is not None:
+            wait_started: _WaitStarted = _WaitStartedDelay()
+            timeout = delay
+        elif platform.system() == "Windows":
+            if self._screen_off:
+                wait_started = _WaitStartedConsoleWindows()
+            else:
+                wait_started = _WaitStartedWindowsSignal()
+        else:
+            wait_started = _WaitStartedConsoleLinux()
+
+        self._process = subprocess.Popen(cmd, env=os.environ, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+        assert self._process.stdout is not None
+        wait_started(timeout, self._process.stdout)
 
     def wait(self, timeout: Optional[float] = None) -> None:
         """wait for process to terminate

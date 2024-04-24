@@ -17,8 +17,8 @@ powerview1.add_interface(pystart.RCLInterface(port1))
 powerview2 = pystart.PowerView(connection, "t32marm")
 powerview2.add_interface(pystart.RCLInterface(port2))
 
-powerview1.start(delay=2)
-powerview2.start(delay=2)
+powerview1.start()
+powerview2.start()
 
 with pyrcl.connect(port=port2) as dbg:
     dbg.cmd("AREA")
