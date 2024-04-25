@@ -188,6 +188,8 @@ class PowerView:
         """stops the process gently
 
         This function blocks until the process is stoppped.
+        When TRACE32 build number is below 165929, you are on Windows and screen is disabled, TRACE32 does not get
+        stopped.
 
         Args:
             timeout: optional timeout in seconds. If `None` wait for an infinite amount of time. Default is `None`.
