@@ -42,3 +42,9 @@ Enumerations
 .. autoclass:: lauterbach.trace32.pystart.WindowMode
 	:members:
 	:undoc-members:
+
+**********
+Exceptions
+**********
+.. automodule:: lauterbach.trace32.pystart._exceptions
+	:members:
