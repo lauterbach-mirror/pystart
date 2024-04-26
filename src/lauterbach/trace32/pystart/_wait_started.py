@@ -3,6 +3,8 @@ import time
 from abc import ABC, abstractmethod
 from typing import IO
 
+from ._exceptions import TimeoutExpiredError
+
 
 class _WaitStarted(ABC):
     @abstractmethod
@@ -25,7 +27,7 @@ class _WaitStartedWindowsSignal(_WaitStarted):
         assert self.event
         rc = ctypes.windll.kernel32.WaitForSingleObject(self.event, int(timeout * 1000))
         if rc == self.WAIT_TIMEOUT:
-            raise RuntimeError("Timeout expired")
+            raise TimeoutExpiredError
         elif rc == self.WAIT_FAILED:
             raise RuntimeError("Waiting for Windows event failed")
 
@@ -44,7 +46,7 @@ class _WaitStartedConsoleWindows(_WaitStarted):
             if b"TRACE32 is up and running" in buffer:
                 break
             if time.monotonic() - start_time > timeout:
-                raise RuntimeError("Timeout expired")
+                raise TimeoutExpiredError
 
 
 class _WaitStartedConsoleLinux(_WaitStarted):
@@ -62,4 +64,4 @@ class _WaitStartedConsoleLinux(_WaitStarted):
                 if b"TRACE32 is up and running..." in buffer:
                     break
             elif time.monotonic() > end_time:
-                raise RuntimeError("Timeout expired")
+                raise TimeoutExpiredError

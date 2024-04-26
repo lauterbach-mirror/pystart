@@ -10,6 +10,7 @@ import tempfile
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Iterable, List, Optional, Union
 
+from ._exceptions import AlreadyRunningError, TimeoutExpiredError
 from ._wait_started import (
     _WaitStarted,
     _WaitStartedConsoleLinux,
@@ -151,11 +152,12 @@ class PowerView:
 
         Raises:
             FileNotFoundError: if the executable can not be found within the specified path
-            RuntimeError: if process is already running
-            RuntimeError: on timeout
+            TimeoutExpiredError: after waiting for the time specified by `timeout`
+            AlreadyRunningError: if process is already running
+            RuntimeError: on other Windows related errors
         """
         if self._process and self._process.poll() is None:
-            raise RuntimeError("PowerView instance is already running")
+            raise AlreadyRunningError
 
         if not self.executable.exists() and not self.executable.is_file():
             raise FileNotFoundError(f"Executable {self.executable} not found")
@@ -202,10 +204,13 @@ class PowerView:
             timeout: optional timeout in seconds.
 
         Raises:
-            subprocess.TimeoutExpired: on timeout
+            TimeoutExpiredError: on timeout
         """
         if self._process:
-            self._process.wait(timeout)
+            try:
+                self._process.wait(timeout)
+            except subprocess.TimeoutExpired as exc:
+                raise TimeoutExpiredError from exc
 
     def stop(self, timeout: Optional[float] = None) -> None:
         """stops the process gently
@@ -218,14 +223,17 @@ class PowerView:
             timeout: optional timeout in seconds. If `None` wait for an infinite amount of time. Default is `None`.
 
         Raises:
-            subprocess.TimeoutExpired: on timeout
+            TimeoutExpiredError: on timeout
         """
         if self._process is None:
             return
 
         if platform.system() == "Windows":
             if self._screen_off:
-                self._process.communicate(input=b"quit\n", timeout=timeout)
+                try:
+                    self._process.communicate(input=b"quit\n", timeout=timeout)
+                except subprocess.TimeoutExpired as exc:
+                    raise TimeoutExpiredError from exc
             else:
                 import ctypes
 
@@ -247,7 +255,11 @@ class PowerView:
                 ctypes.windll.user32.EnumWindows(close_message_to_t32, None)
         else:
             self._process.terminate()
-        self._process.wait(timeout)
+
+        try:
+            self._process.wait(timeout)
+        except subprocess.TimeoutExpired as exc:
+            raise TimeoutExpiredError from exc
 
     def get_pid(self) -> Optional[int]:
         """Returns the process id
