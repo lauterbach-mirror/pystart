@@ -3,7 +3,6 @@ import itertools
 import os
 import pathlib
 import platform
-import shlex
 import shutil
 import subprocess
 import tempfile
@@ -129,8 +128,9 @@ class PowerView:
         # startup script
         self.startup_script: "PathType" = ""
         """A cmm script being executed on start of TRACE32."""
-        self.startup_parameter: Union[str, Iterable[str]] = ""
-        """Parameter for ``startup_script``"""
+        self.startup_parameter: Iterable[str] = []
+        """Parameter for ``startup_script``. If you want to retrieve the parameters by ``PARAMETERS`` command, consider
+        adding additional quotes at beginning and ending of each string."""
         self.safe_start: bool = False
         """Suppresses the automatic execution of any PRACTICE script after starting TRACE32. This allows you to test or
         debug the scripts that are normally executed automatically."""
@@ -163,14 +163,12 @@ class PowerView:
         cmd = [str(self.executable), "--t32-bootstatus"]
         if self.startup_script and self.safe_start:
             cmd.append("--t32-safestart")
-        assert self._config_file_name
-        cmd.extend(["-c", self._config_file_name])
+        if self._config_file_name:
+            cmd.extend(["-c", self._config_file_name])
         if self.startup_script:
             cmd.append("-s")
             cmd.append(str(self.startup_script))
-            if isinstance(self.startup_parameter, str):
-                cmd.extend(shlex.split(self.startup_parameter))
-            else:
+            if self.startup_parameter:
                 cmd.extend(self.startup_parameter)
         return cmd
 
