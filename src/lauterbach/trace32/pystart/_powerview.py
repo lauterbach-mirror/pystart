@@ -141,6 +141,39 @@ class PowerView:
         if self._config_file_name:
             os.remove(self._config_file_name)
 
+    def _create_config_file(self) -> str:
+        config_file = tempfile.NamedTemporaryFile("w+", delete=False)
+        config_string = self.get_configuration_string()
+        config_file.write(config_string)
+        config_file.close()
+        return config_file.name
+
+    def _get_wait_started_handler(self, use_delay: bool = False) -> _WaitStarted:
+        if use_delay:
+            return _WaitStartedDelay()
+        elif platform.system() == "Windows":
+            if self._screen_off:
+                return _WaitStartedConsoleWindows()
+            else:
+                return _WaitStartedWindowsSignal()
+        else:
+            return _WaitStartedConsoleLinux()
+
+    def _get_popen_args(self) -> List[str]:
+        cmd = [str(self.executable), "--t32-bootstatus"]
+        if self.startup_script and self.safe_start:
+            cmd.append("--t32-safestart")
+        assert self._config_file_name
+        cmd.extend(["-c", self._config_file_name])
+        if self.startup_script:
+            cmd.append("-s")
+            cmd.append(str(self.startup_script))
+            if isinstance(self.startup_parameter, str):
+                cmd.extend(shlex.split(self.startup_parameter))
+            else:
+                cmd.extend(self.startup_parameter)
+        return cmd
+
     def start(self, *, timeout: float = 20.0, delay: Optional[float] = None) -> None:
         """start the powerview executable as a process
 
@@ -162,37 +195,14 @@ class PowerView:
         if not self.executable.exists() and not self.executable.is_file():
             raise FileNotFoundError(f"Executable {self.executable} not found")
 
-        # create config-file
-        config_file = tempfile.NamedTemporaryFile("w+", delete=False)
-        config_string = self.get_configuration_string()
-        config_file.write(config_string)
-        config_file.close()
-        self._config_file_name = config_file.name
-
-        # start program
-        cmd = [str(self.executable), "--t32-bootstatus"]
-        if self.startup_script and self.safe_start:
-            cmd.append("--t32-safestart")
-        cmd.extend(["-c", self._config_file_name])
-        if self.startup_script:
-            cmd.append("-s")
-            cmd.append(str(self.startup_script))
-            if isinstance(self.startup_parameter, str):
-                cmd.extend(shlex.split(self.startup_parameter))
-            else:
-                cmd.extend(self.startup_parameter)
-
+        use_delay = False
         if delay is not None:
-            wait_started: _WaitStarted = _WaitStartedDelay()
             timeout = delay
-        elif platform.system() == "Windows":
-            if self._screen_off:
-                wait_started = _WaitStartedConsoleWindows()
-            else:
-                wait_started = _WaitStartedWindowsSignal()
-        else:
-            wait_started = _WaitStartedConsoleLinux()
+            use_delay = True
 
+        wait_started = self._get_wait_started_handler(use_delay)
+        self._config_file_name = self._create_config_file()
+        cmd = self._get_popen_args()
         self._process = subprocess.Popen(cmd, env=os.environ, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
         assert self._process.stdout is not None
         wait_started(timeout, self._process.stdout)
