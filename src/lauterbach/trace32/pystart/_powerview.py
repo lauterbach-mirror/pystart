@@ -10,13 +10,7 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, Iterable, List, Optional, Union
 
 from ._exceptions import AlreadyRunningError, TimeoutExpiredError
-from ._wait_started import (
-    _WaitStarted,
-    _WaitStartedConsoleLinux,
-    _WaitStartedConsoleWindows,
-    _WaitStartedDelay,
-    _WaitStartedWindowsSignal,
-)
+from ._wait_started import _get_wait_started_handler
 
 PathType = Union[str, pathlib.Path]
 
@@ -135,7 +129,7 @@ class PowerView:
         """Suppresses the automatic execution of any PRACTICE script after starting TRACE32. This allows you to test or
         debug the scripts that are normally executed automatically."""
 
-        self._config_file_name: Optional[str] = None
+        self._config_file_name: str = ""
 
     def __del__(self) -> None:
         if self._config_file_name:
@@ -148,23 +142,12 @@ class PowerView:
         config_file.close()
         return config_file.name
 
-    def _get_wait_started_handler(self, use_delay: bool = False) -> _WaitStarted:
-        if use_delay:
-            return _WaitStartedDelay()
-        elif platform.system() == "Windows":
-            if self._screen_off:
-                return _WaitStartedConsoleWindows()
-            else:
-                return _WaitStartedWindowsSignal()
-        else:
-            return _WaitStartedConsoleLinux()
-
     def _get_popen_args(self) -> List[str]:
         cmd = [str(self.executable), "--t32-bootstatus"]
         if self.startup_script and self.safe_start:
             cmd.append("--t32-safestart")
-        if self._config_file_name:
-            cmd.extend(["-c", self._config_file_name])
+        self._config_file_name = self._create_config_file()
+        cmd.extend(["-c", self._config_file_name])
         if self.startup_script:
             cmd.append("-s")
             cmd.append(str(self.startup_script))
@@ -198,8 +181,7 @@ class PowerView:
             timeout = delay
             use_delay = True
 
-        wait_started = self._get_wait_started_handler(use_delay)
-        self._config_file_name = self._create_config_file()
+        wait_started = _get_wait_started_handler(use_delay, self._screen_off)
         cmd = self._get_popen_args()
         self._process = subprocess.Popen(cmd, env=os.environ, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
         assert self._process.stdout is not None

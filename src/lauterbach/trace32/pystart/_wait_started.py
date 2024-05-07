@@ -1,4 +1,5 @@
 import ctypes
+import platform
 import time
 from abc import ABC, abstractmethod
 from typing import IO
@@ -10,6 +11,18 @@ class _WaitStarted(ABC):
     @abstractmethod
     def __call__(self, timeout: float, stdout: IO[bytes]) -> None:
         raise NotImplementedError()
+
+
+def _get_wait_started_handler(use_delay: bool = False, screen_off: bool = False) -> _WaitStarted:
+    if use_delay:
+        return _WaitStartedDelay()
+    elif platform.system() == "Windows":
+        if screen_off:
+            return _WaitStartedConsoleWindows()
+        else:
+            return _WaitStartedWindowsSignal()
+    else:
+        return _WaitStartedConsoleLinux()
 
 
 class _WaitStartedWindowsSignal(_WaitStarted):
