@@ -94,7 +94,7 @@ class GDBInterface(T32Interface):
     """Specifies the maximum data package length for UDP. No operation for TCP."""
 
     def _get_config_string(self) -> str:
-        if self.protocol not in self._GDB_PROTOCOLS:  # TODO: should we rather fail fast (during construction)?
+        if self.protocol not in self._GDB_PROTOCOLS:
             raise ValueError(f"protocol must be one of {self._GDB_PROTOCOLS}")
 
         args = [

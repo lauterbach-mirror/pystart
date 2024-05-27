@@ -1,19 +1,22 @@
 import enum
 import itertools
+import logging
 import os
 import pathlib
 import platform
 import shutil
 import subprocess
 import tempfile
+import threading
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Iterable, List, Optional, Union
+from typing import Any, Dict, Iterable, List, Optional, TextIO, Union
 
 from ._exceptions import AlreadyRunningError, TimeoutExpiredError
-from ._wait_started import _get_wait_started_handler
 
 PathType = Union[str, pathlib.Path]
-
+logger = logging.getLogger("lauterbach.trace32.pystart")
+logger_stdout = logger.getChild("stdout")
+logger_stderr = logger.getChild("stderr")
 __all__ = ["PowerView", "Connection", "T32Interface"]
 
 
@@ -49,8 +52,12 @@ class PowerView:
         """
         self._connection: "Connection" = connection
         self._connection._register(self, pbi_index)
-        self._process: Optional[subprocess.Popen[bytes]] = None
+        self._process: Optional[subprocess.Popen[str]] = None
         self.interfaces: Dict[Any, List[T32Interface]] = dict()
+        self._config_file_name: str = ""
+        self._thread_stdout: Optional[threading.Thread] = None
+        self._thread_stderr: Optional[threading.Thread] = None
+        self._event_started = threading.Event()
 
         # paths
         self.system_path: "PathType" = system_path
@@ -129,8 +136,6 @@ class PowerView:
         """Suppresses the automatic execution of any PRACTICE script after starting TRACE32. This allows you to test or
         debug the scripts that are normally executed automatically."""
 
-        self._config_file_name: str = ""
-
     def __del__(self) -> None:
         if self._config_file_name:
             os.remove(self._config_file_name)
@@ -140,6 +145,7 @@ class PowerView:
         config_string = self.get_configuration_string()
         config_file.write(config_string)
         config_file.close()
+        logger.debug(f"temporary config file created: {config_file.name}")
         return config_file.name
 
     def _get_popen_args(self) -> List[str]:
@@ -160,15 +166,14 @@ class PowerView:
 
         Args:
             timeout: timeout for complete start of TRACE32 in seconds. (default=20.0)
-            delay: (deprecated) time to wait for complete start of PowerView. If parameter is not `None` timeout is
-                    ignored. For TRACE32 installations with a build number below 166336 please set `delay` parameter to
-                    an appropriate number.
+            delay: (deprecated) If not `None` value is used to overwrite `timeout` parameter, at the same time
+                    `TimeoutExpiredError` exception is disabled. Please set `delay` parameter to an appropriate value
+                    for TRACE32 installations with a build number below 166336.
 
         Raises:
             FileNotFoundError: if the executable can not be found within the specified path
             TimeoutExpiredError: after waiting for the time specified by `timeout`
             AlreadyRunningError: if process is already running
-            RuntimeError: on other Windows related errors
         """
         if self._process and self._process.poll() is None:
             raise AlreadyRunningError
@@ -176,16 +181,37 @@ class PowerView:
         if not self.executable.exists() and not self.executable.is_file():
             raise FileNotFoundError(f"Executable {self.executable} not found")
 
-        use_delay = False
         if delay is not None:
             timeout = delay
-            use_delay = True
 
-        wait_started = _get_wait_started_handler(use_delay, self._screen_off)
+        if platform.system() == "Windows" and not self._screen_off:
+            logger.debug("create Windows event for waiting until PowerView has started")
+            t = threading.Thread(
+                target=_wait_started_windows_signal, args=(self._event_started, timeout + 1), daemon=True
+            )
+            t.start()
+
         cmd = self._get_popen_args()
-        self._process = subprocess.Popen(cmd, env=os.environ, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+        logger.info("starting PowerView instance")
+        self._process = subprocess.Popen(
+            cmd, env=os.environ, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+        )
+
         assert self._process.stdout is not None
-        wait_started(timeout, self._process.stdout)
+        assert self._process.stderr is not None
+        self._thread_stdout = threading.Thread(
+            target=_handle_console_out, args=(self._process.stdout, logger_stdout, self._event_started), daemon=True
+        )
+        self._thread_stderr = threading.Thread(
+            target=_handle_console_out, args=(self._process.stderr, logger_stderr, self._event_started), daemon=True
+        )
+        self._thread_stdout.start()
+        self._thread_stderr.start()
+
+        logger.info("waiting for start of PowerView instance")
+        if not self._event_started.wait(timeout) and delay is None:
+            raise TimeoutExpiredError("Timeout expired on waiting for complete start of PowerView")
+        logger.info("PowerView instance started")
 
     def wait(self, timeout: Optional[float] = None) -> None:
         """wait for process to terminate
@@ -201,6 +227,7 @@ class PowerView:
                 self._process.wait(timeout)
             except subprocess.TimeoutExpired as exc:
                 raise TimeoutExpiredError from exc
+        self._event_started.clear()
 
     def stop(self, timeout: Optional[float] = None) -> None:
         """stops the process gently
@@ -220,8 +247,10 @@ class PowerView:
 
         if platform.system() == "Windows":
             if self._screen_off:
+                assert self._process.stdin is not None
                 try:
-                    self._process.communicate(input=b"quit\n", timeout=timeout)
+                    logger.debug('send "QUIT" to PowerView instance via stdin')
+                    self._process.stdin.write("quit\n")
                 except subprocess.TimeoutExpired as exc:
                     raise TimeoutExpiredError from exc
             else:
@@ -239,11 +268,13 @@ class PowerView:
                         and ctypes.windll.user32.IsWindowVisible(hwnd)
                     ):
                         WM_CLOSE = 0x0010
+                        logger.debug('Post Windows message "WM_CLOSE"')
                         ctypes.windll.user32.PostMessageA(hwnd, WM_CLOSE, 0, 0)
                     return 1
 
                 ctypes.windll.user32.EnumWindows(close_message_to_t32, None)
         else:
+            logger.debug("send SIGTERM to PowerView instance")
             self._process.terminate()
 
         try:
@@ -468,6 +499,32 @@ class PowerView:
     def _get_config_string_interface(self) -> str:
         cfg = [x._get_config_string() for x in itertools.chain.from_iterable(self.interfaces.values())]
         return "\n\n".join(cfg)
+
+
+def _wait_started_windows_signal(event_started: threading.Event, timeout: float) -> None:
+    import ctypes
+
+    WAIT_TIMEOUT = 0x00000102
+    WAIT_FAILED = 0xFFFFFFFF
+
+    event = ctypes.c_long(ctypes.windll.kernel32.CreateEventW(0, 0, 0, "T32_STARTUP_COMPLETED"))
+    assert event != ctypes.c_long(0), "no eventhandler was created"
+    rc = ctypes.windll.kernel32.WaitForSingleObject(event, int(timeout * 1000))
+    if rc == WAIT_TIMEOUT:
+        logger.error("timeout expired on waiting for Windows event")
+    elif rc == WAIT_FAILED:
+        logger.error("waiting for Windows event failed (WAIT_FAILED)")
+    else:
+        logger.debug("received T32_STARTUP_COMPLETED event")
+        event_started.set()
+
+
+def _handle_console_out(stdout: TextIO, console_logger: logging.Logger, event_started: threading.Event) -> None:
+    for line in stdout:
+        line = line.rstrip()
+        if line == "TRACE32 is up and running...":
+            event_started.set()
+        console_logger.info(line)
 
 
 class Connection(ABC):
