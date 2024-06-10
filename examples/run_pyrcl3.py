@@ -10,7 +10,7 @@ rcl_params: Dict[str, Any] = {"port": 20000, "protocol": "UDP", "packlen": 1024}
 powerview = pystart.PowerView(pystart.SimulatorConnection(), "t32marm")
 powerview.add_interface(pystart.RCLInterface(**rcl_params))
 
-powerview.start(delay=0.5)
+powerview.start()
 
 with pyrcl.connect(**rcl_params, timeout=5.0) as dbg:
     dbg.cmd("AREA")

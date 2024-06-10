@@ -8,7 +8,7 @@ port = 20000
 
 powerview = pystart.PowerView(pystart.SimulatorConnection(), "t32marm")
 powerview.add_interface(pystart.RCLInterface(port))
-powerview.start(delay=0.5)
+powerview.start()
 
 with pyrcl.connect(port=port) as dbg:
     dbg.cmd("AREA")

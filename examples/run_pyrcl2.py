@@ -12,7 +12,7 @@ rcl_params: Dict[str, Any] = {"port": 20000, "protocol": "UDP", "packlen": 1024}
 pv2 = pystart.PowerView(pystart.SimulatorConnection(), "t32marm")
 pv2.add_interface(pystart.RCLInterface(**rcl_params))
 
-pv2.start(delay=0.5)
+pv2.start()
 with pyrcl.connect(**rcl_params, timeout=5.0) as dbg:
     dbg.cmd("AREA")
     dbg.print("rcl.connect(port=...)")

@@ -21,6 +21,7 @@ from ._connection import (
     USBConnection,
     USBProxyConnection,
 )
+from ._exceptions import AlreadyRunningError, TimeoutExpiredError
 from ._interface import (
     GDBInterface,
     IntercomInterface,
@@ -70,4 +71,7 @@ __all__ = [
     "Language",
     # default values
     "defaults",
+    # Exceptions
+    "TimeoutExpiredError",
+    "AlreadyRunningError",
 ]

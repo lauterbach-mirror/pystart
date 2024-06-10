@@ -4,7 +4,30 @@ lauterbach-trace32-pystart module (pystart) which allows the configuration and s
 
 For feedback and questions, please contact support@lauterbach.com (include "pystart" in the subject).
 
+## Example
+```python
+import lauterbach.trace32.pystart as pystart
+
+pystart.defaults.system_path = r"C:\T32"
+
+powerview = pystart.PowerView(pystart.USBConnection(), "t32marm")
+powerview.title = f"TRACE32 PowerView for ARM 0"
+powerview.id = "T32_arm0"
+
+powerview.start()
+powerview.wait()
+```
+
 ## Release Notes
+### v0.2.0
+* use binaries from `PATH` if no system_path is specified
+* gently stop Trace32 on Windows OS
+* added timeout for `PowerView.stop()`
+* wait necessary time in `PowerView.start()` instead of waiting for a predefined amount of time
+* added exeptions `TimeoutExpiredError` and `AlreadyRunningError`
+* limit startup script parameter to be of type `Iterable[str]`
+* send `stdout` and `stderr` output of PowerView instance to a logger
+
 ### v0.1.7
 * fix datatype of `library_file` parameters in some Connection classes to allow `pathlib.Path`'s.
 * add `TCPConnection` for Lauterbach X-Series debugger.

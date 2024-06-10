@@ -1,26 +1,29 @@
 import enum
 import itertools
+import logging
 import os
 import pathlib
 import platform
-import shlex
+import shutil
 import subprocess
 import tempfile
-import time
+import threading
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Iterable, List, Optional, Union
+from typing import Any, Dict, Iterable, List, Optional, TextIO, Union
+
+from ._exceptions import AlreadyRunningError, TimeoutExpiredError
 
 PathType = Union[str, pathlib.Path]
-
+logger = logging.getLogger("lauterbach.trace32.pystart")
+logger_stdout = logger.getChild("stdout")
+logger_stderr = logger.getChild("stderr")
 __all__ = ["PowerView", "Connection", "T32Interface"]
 
 
-_PATH_OS_SPECIFIC = {
-    # OS     : ( 64-bit exe , 32-bit exe  )
-    "Windows": ("windows64", "windows"),
-    "Linux": ("pc_linux64", "pc_linux64"),
-    "Darwin": ("macosx64", "macosx64"),
-    # TODO: Solaris SUN
+_BIN_SUBFOLDER = {
+    "Windows": "windows",
+    "Linux": "pc_linux64",
+    "Darwin": "macosx64",
 }
 
 
@@ -49,8 +52,12 @@ class PowerView:
         """
         self._connection: "Connection" = connection
         self._connection._register(self, pbi_index)
-        self._process: Optional[subprocess.Popen[bytes]] = None
+        self._process: Optional[subprocess.Popen[str]] = None
         self.interfaces: Dict[Any, List[T32Interface]] = dict()
+        self._config_file_name: str = ""
+        self._thread_stdout: Optional[threading.Thread] = None
+        self._thread_stderr: Optional[threading.Thread] = None
+        self._event_started = threading.Event()
 
         # paths
         self.system_path: "PathType" = system_path
@@ -72,8 +79,8 @@ class PowerView:
         """
         self.force_32bit_executable: Optional[bool] = None
         """If set, pystart will start the 32-bit executable located under ``bin/windows`` instead of the 64-bit
-        executable located under ``bin/windows64``. This could be e.g. needed if a 32-bit DLL has to be loaded in
-        TRACE32 PowerView."""
+        executable located under ``bin/windows64`` if the executable is derived from system_path. This could be e.g.
+        needed if a 32-bit DLL has to be loaded in TRACE32 PowerView."""
         # rlm license
         self.rlm_port: int = 5055
         """The Floating License Client (RLM Client) needs to know which (RLM) port number should be used to get the
@@ -91,6 +98,7 @@ class PowerView:
         self.screen: Optional[bool] = None
         """If ``False`` the main window of TRACE32 and all other dialogs and windows of TRACE32 remain hidden - even if
         an error occurs. If ``None`` the global default is used."""
+        self._screen_off: bool = False
         self.title: str = ""
         """Sets the window title of the TRACE32 instance."""
         self.font_size: Optional[FontSize] = None
@@ -121,75 +129,158 @@ class PowerView:
         # startup script
         self.startup_script: "PathType" = ""
         """A cmm script being executed on start of TRACE32."""
-        self.startup_parameter: Union[str, Iterable[str]] = ""
-        """Parameter for ``startup_script``"""
+        self.startup_parameter: Iterable[str] = []
+        """Parameter for ``startup_script``. If you want to retrieve the parameters by ``PARAMETERS`` command, consider
+        adding additional quotes at beginning and ending of each string."""
         self.safe_start: bool = False
         """Suppresses the automatic execution of any PRACTICE script after starting TRACE32. This allows you to test or
         debug the scripts that are normally executed automatically."""
-
-        self._config_file_name: Optional[str] = None
 
     def __del__(self) -> None:
         if self._config_file_name:
             os.remove(self._config_file_name)
 
-    def start(self, *, delay: float = 6.0) -> None:
-        """start the powerview executable as a process
-
-        Args:
-            delay: time to wait for complete start of PowerView
-
-        Raises:
-            FileNotFoundError: if the executable can not be found within the specified path
-            RuntimeError: if process is already running
-        """
-        if self._process and self._process.poll() is None:
-            raise RuntimeError("PowerView instance is already running")
-
-        if not self.executable.exists() and not self.executable.is_file():
-            raise FileNotFoundError(f"Executable {self.executable} not found")
-
-        # create config-file
+    def _create_config_file(self) -> str:
         config_file = tempfile.NamedTemporaryFile("w+", delete=False)
         config_string = self.get_configuration_string()
         config_file.write(config_string)
         config_file.close()
-        self._config_file_name = config_file.name
+        logger.debug(f"temporary config file created: {config_file.name}")
+        return config_file.name
 
-        # start program
-        cmd = [str(self.executable)]
+    def _get_popen_args(self) -> List[str]:
+        cmd = [str(self.executable), "--t32-bootstatus"]
         if self.startup_script and self.safe_start:
             cmd.append("--t32-safestart")
+        self._config_file_name = self._create_config_file()
         cmd.extend(["-c", self._config_file_name])
         if self.startup_script:
             cmd.append("-s")
             cmd.append(str(self.startup_script))
-            if isinstance(self.startup_parameter, str):
-                cmd.extend(shlex.split(self.startup_parameter))
-            else:
+            if self.startup_parameter:
                 cmd.extend(self.startup_parameter)
+        return cmd
 
-        self._process = subprocess.Popen(cmd, env=os.environ)
-        time.sleep(delay)
+    def start(self, *, timeout: float = 20.0, delay: Optional[float] = None) -> None:
+        """start the powerview executable as a process
+
+        Args:
+            timeout: timeout for complete start of TRACE32 in seconds. (default=20.0)
+            delay: (deprecated) If not `None` value is used to overwrite `timeout` parameter, at the same time
+                    `TimeoutExpiredError` exception is disabled. Please set `delay` parameter to an appropriate value
+                    for TRACE32 installations with a build number below 166336.
+
+        Raises:
+            FileNotFoundError: if the executable can not be found within the specified path
+            TimeoutExpiredError: after waiting for the time specified by `timeout`
+            AlreadyRunningError: if process is already running
+        """
+        if self._process and self._process.poll() is None:
+            raise AlreadyRunningError
+
+        if not self.executable.exists() and not self.executable.is_file():
+            raise FileNotFoundError(f"Executable {self.executable} not found")
+
+        if delay is not None:
+            timeout = delay
+
+        if platform.system() == "Windows" and not self._screen_off:
+            logger.debug("create Windows event for waiting until PowerView has started")
+            t = threading.Thread(
+                target=_wait_started_windows_signal, args=(self._event_started, timeout + 1), daemon=True
+            )
+            t.start()
+
+        cmd = self._get_popen_args()
+        logger.info("starting PowerView instance")
+        self._process = subprocess.Popen(
+            cmd, env=os.environ, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+        )
+
+        assert self._process.stdout is not None
+        assert self._process.stderr is not None
+        self._thread_stdout = threading.Thread(
+            target=_handle_console_out, args=(self._process.stdout, logger_stdout, self._event_started), daemon=True
+        )
+        self._thread_stderr = threading.Thread(
+            target=_handle_console_out, args=(self._process.stderr, logger_stderr, self._event_started), daemon=True
+        )
+        self._thread_stdout.start()
+        self._thread_stderr.start()
+
+        logger.info("waiting for start of PowerView instance")
+        if not self._event_started.wait(timeout) and delay is None:
+            raise TimeoutExpiredError("Timeout expired on waiting for complete start of PowerView")
+        logger.info("PowerView instance started")
 
     def wait(self, timeout: Optional[float] = None) -> None:
         """wait for process to terminate
 
         Args:
-            Timeout: optional timeout in seconds.
+            timeout: optional timeout in seconds.
+
+        Raises:
+            TimeoutExpiredError: on timeout
         """
         if self._process:
-            self._process.wait(timeout)
+            try:
+                self._process.wait(timeout)
+            except subprocess.TimeoutExpired as exc:
+                raise TimeoutExpiredError from exc
+        self._event_started.clear()
 
-    def stop(self) -> None:
-        """terminates the process
+    def stop(self, timeout: Optional[float] = None) -> None:
+        """stops the process gently
 
-        After stopping a PowerView instance running with a hardware based connection, the hardware must be power cycled
-        before connecting again. Alternatively, to stop TRACE32 click the close button in the GUI or execute command
-        "QUIT" within TRACE32.
+        This function blocks until the process is stoppped.
+        When TRACE32 build number is below 165929, you are on Windows and screen is disabled, TRACE32 does not get
+        stopped.
+
+        Args:
+            timeout: optional timeout in seconds. If `None` wait for an infinite amount of time. Default is `None`.
+
+        Raises:
+            TimeoutExpiredError: on timeout
         """
-        if self._process:
+        if self._process is None:
+            return
+
+        if platform.system() == "Windows":
+            if self._screen_off:
+                assert self._process.stdin is not None
+                try:
+                    logger.debug('send "QUIT" to PowerView instance via stdin')
+                    self._process.stdin.write("quit\n")
+                except subprocess.TimeoutExpired as exc:
+                    raise TimeoutExpiredError from exc
+            else:
+                import ctypes
+
+                @ctypes.WINFUNCTYPE(ctypes.c_long, ctypes.c_ulong, ctypes.c_long)
+                def close_message_to_t32(hwnd, _):  # type: ignore
+                    hwnd = ctypes.c_ulong(hwnd)
+                    window_pid = ctypes.c_longlong()
+                    ctypes.windll.user32.GetWindowThreadProcessId(hwnd, ctypes.byref(window_pid))
+                    GW_OWNER = 4
+                    if (
+                        window_pid.value == self._process.pid  # type: ignore
+                        and ctypes.windll.user32.GetWindow(hwnd, GW_OWNER) == 0
+                        and ctypes.windll.user32.IsWindowVisible(hwnd)
+                    ):
+                        WM_CLOSE = 0x0010
+                        logger.debug('Post Windows message "WM_CLOSE"')
+                        ctypes.windll.user32.PostMessageA(hwnd, WM_CLOSE, 0, 0)
+                    return 1
+
+                ctypes.windll.user32.EnumWindows(close_message_to_t32, None)
+        else:
+            logger.debug("send SIGTERM to PowerView instance")
             self._process.terminate()
+
+        try:
+            self._process.wait(timeout)
+        except subprocess.TimeoutExpired as exc:
+            raise TimeoutExpiredError from exc
 
     def get_pid(self) -> Optional[int]:
         """Returns the process id
@@ -217,30 +308,36 @@ class PowerView:
         if not self.target:
             raise ValueError("no target specified")
 
-        env_system_path = os.environ.get("T32SYS")
-        if self.system_path:
-            current_system_path = pathlib.Path(self.system_path)
-        elif defaults.system_path:
-            current_system_path = pathlib.Path(defaults.system_path)
-        elif env_system_path:
-            current_system_path = pathlib.Path(env_system_path)
-        elif platform.system() == "Windows":
-            current_system_path = pathlib.Path(r"C:\T32")
-        else:
-            raise ValueError("no system_path specified")
-
         system = platform.system()
-        sys_specific = _PATH_OS_SPECIFIC[system][
-            self.force_32bit_executable if self.force_32bit_executable is not None else defaults.force_32bit_executable
-        ]
-        extension = ".exe" if system == "Windows" else ""
-        executable = f"{self.target}{extension}"
+        system_path = self.system_path or defaults.system_path or os.environ.get("T32SYS")
 
-        path = current_system_path.joinpath("bin", sys_specific, executable)
-        if not path.exists():
-            sys_specific = _PATH_OS_SPECIFIC[system][True]  # Force 32-bit executable
-            path = current_system_path.joinpath("bin", sys_specific, executable)
-        return path
+        if not system_path:
+            executable = shutil.which(self.target)
+            if executable:
+                return pathlib.Path(executable)
+
+            if system == "Windows":
+                system_path = r"C:\T32"
+            elif system == "Linux":
+                system_path = "/opt/t32"
+            else:
+                raise ValueError("no system_path specified")
+
+        sys_specific = _BIN_SUBFOLDER[system]
+        extension = ""
+
+        if system == "Windows":
+            extension = ".exe"
+            if not self.force_32bit_executable:
+                sys_specific += "64"
+
+        path = pathlib.Path(system_path, "bin", sys_specific, f"{self.target}{extension}")
+        if path.exists():
+            return path
+
+        if system == "Windows" and not self.force_32bit_executable:
+            sys_specific = _BIN_SUBFOLDER[system]
+        return pathlib.Path(system_path, "bin", sys_specific, f"{self.target}{extension}")
 
     def add_interface(self, interface: "T32Interface") -> "T32Interface":
         """Add a interface for inter-process communication
@@ -353,7 +450,8 @@ class PowerView:
             return ""
 
     def _get_config_string_screen(self) -> str:
-        if self.screen is False or (self.screen is None and defaults.screen is False):
+        self._screen_off = self.screen is False or (self.screen is None and defaults.screen is False)
+        if self._screen_off:
             return "SCREEN=OFF"
         args = ["SCREEN="]
 
@@ -401,6 +499,32 @@ class PowerView:
     def _get_config_string_interface(self) -> str:
         cfg = [x._get_config_string() for x in itertools.chain.from_iterable(self.interfaces.values())]
         return "\n\n".join(cfg)
+
+
+def _wait_started_windows_signal(event_started: threading.Event, timeout: float) -> None:
+    import ctypes
+
+    WAIT_TIMEOUT = 0x00000102
+    WAIT_FAILED = 0xFFFFFFFF
+
+    event = ctypes.c_long(ctypes.windll.kernel32.CreateEventW(0, 0, 0, "T32_STARTUP_COMPLETED"))
+    assert event != ctypes.c_long(0), "no eventhandler was created"
+    rc = ctypes.windll.kernel32.WaitForSingleObject(event, int(timeout * 1000))
+    if rc == WAIT_TIMEOUT:
+        logger.error("timeout expired on waiting for Windows event")
+    elif rc == WAIT_FAILED:
+        logger.error("waiting for Windows event failed (WAIT_FAILED)")
+    else:
+        logger.debug("received T32_STARTUP_COMPLETED event")
+        event_started.set()
+
+
+def _handle_console_out(stdout: TextIO, console_logger: logging.Logger, event_started: threading.Event) -> None:
+    for line in stdout:
+        line = line.rstrip()
+        if line == "TRACE32 is up and running...":
+            event_started.set()
+        console_logger.info(line)
 
 
 class Connection(ABC):
