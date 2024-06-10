@@ -19,7 +19,7 @@ powerview.wait()
 ```
 
 ## Release Notes
-### v*
+### v0.2.0
 * use binaries from `PATH` if no system_path is specified
 * gently stop Trace32 on Windows OS
 * added timeout for `PowerView.stop()`
