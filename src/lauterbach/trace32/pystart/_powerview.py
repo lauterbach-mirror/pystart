@@ -162,7 +162,7 @@ class PowerView:
         return cmd
 
     def start(self, *, timeout: float = 20.0, delay: Optional[float] = None) -> None:
-        """start the powerview executable as a process
+        """generates a config file, starts TRACE32 and blocks until TRACE32 has fully started
 
         Args:
             timeout: timeout for complete start of TRACE32 in seconds. (default=20.0)
