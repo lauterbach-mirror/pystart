@@ -19,6 +19,9 @@ powerview.wait()
 ```
 
 ## Release Notes
+* use builtin `TimeoutError` instead of `TimeoutExpiredError`
+* use builtin `RuntimeError` instead of `AlreadyRunningError`
+
 ### v0.2.0
 * use binaries from `PATH` if no system_path is specified
 * gently stop Trace32 on Windows OS

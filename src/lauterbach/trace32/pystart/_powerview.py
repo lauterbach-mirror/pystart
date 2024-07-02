@@ -11,8 +11,6 @@ import threading
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Iterable, List, Optional, TextIO, Union
 
-from ._exceptions import AlreadyRunningError, TimeoutExpiredError
-
 PathType = Union[str, pathlib.Path]
 logger = logging.getLogger("lauterbach.trace32.pystart")
 logger_stdout = logger.getChild("stdout")
@@ -167,16 +165,16 @@ class PowerView:
         Args:
             timeout: timeout for complete start of TRACE32 in seconds. (default=20.0)
             delay: (deprecated) If not `None` value is used to overwrite `timeout` parameter, at the same time
-                    `TimeoutExpiredError` exception is disabled. Please set `delay` parameter to an appropriate value
+                    `TimeoutError` exception is disabled. Please set `delay` parameter to an appropriate value
                     for TRACE32 installations with a build number below 166336.
 
         Raises:
             FileNotFoundError: if the executable can not be found within the specified path
-            TimeoutExpiredError: after waiting for the time specified by `timeout`
-            AlreadyRunningError: if process is already running
+            TimeoutError: after waiting for the time specified by `timeout`
+            RuntimeError: if process is already running
         """
         if self._process and self._process.poll() is None:
-            raise AlreadyRunningError
+            raise RuntimeError("process is already running")
 
         if not self.executable.exists() and not self.executable.is_file():
             raise FileNotFoundError(f"Executable {self.executable} not found")
@@ -210,7 +208,7 @@ class PowerView:
 
         logger.info("waiting for start of PowerView instance")
         if not self._event_started.wait(timeout) and delay is None:
-            raise TimeoutExpiredError("Timeout expired on waiting for complete start of PowerView")
+            raise TimeoutError("Timeout expired on waiting for complete start of PowerView")
         logger.info("PowerView instance started")
 
     def wait(self, timeout: Optional[float] = None) -> None:
@@ -220,13 +218,13 @@ class PowerView:
             timeout: optional timeout in seconds.
 
         Raises:
-            TimeoutExpiredError: on timeout
+            TimeoutError: on timeout
         """
         if self._process:
             try:
                 self._process.wait(timeout)
             except subprocess.TimeoutExpired as exc:
-                raise TimeoutExpiredError from exc
+                raise TimeoutError from exc
         self._event_started.clear()
 
     def stop(self, timeout: Optional[float] = None) -> None:
@@ -240,7 +238,7 @@ class PowerView:
             timeout: optional timeout in seconds. If `None` wait for an infinite amount of time. Default is `None`.
 
         Raises:
-            TimeoutExpiredError: on timeout
+            TimeoutError: on timeout
         """
         if self._process is None:
             return
@@ -252,7 +250,7 @@ class PowerView:
                     logger.debug('send "QUIT" to PowerView instance via stdin')
                     self._process.stdin.write("quit\n")
                 except subprocess.TimeoutExpired as exc:
-                    raise TimeoutExpiredError from exc
+                    raise TimeoutError from exc
             else:
                 import ctypes
 
@@ -280,7 +278,7 @@ class PowerView:
         try:
             self._process.wait(timeout)
         except subprocess.TimeoutExpired as exc:
-            raise TimeoutExpiredError from exc
+            raise TimeoutError from exc
 
     def get_pid(self) -> Optional[int]:
         """Returns the process id
