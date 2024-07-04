@@ -30,6 +30,7 @@ __all__ = [
     "SIMTSIConnection",
     "ViewerConnection",
     "TCPConnection",
+    "InteractiveConnection",
 ]
 
 
@@ -408,6 +409,20 @@ class ViewerConnection(_SingleConnection):
 
     def _get_config_string(self, power_view: "PowerView") -> str:
         return "PBI=VIEWER"
+
+
+class InteractiveConnection(_SingleConnection):
+    """This mode allows to start PowerView without a connection to a debug module / simulator etc.
+    Several windows will guide through the connection process.
+
+    Available since TRACE32 build 167333.
+    """
+
+    def __init__(self) -> None:
+        super().__init__()
+
+    def _get_config_string(self, power_view: "PowerView") -> str:
+        return "PBI=INTERACTIVECONNECTION"
 
 
 class GDBConnection(_SingleConnection):

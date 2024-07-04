@@ -45,6 +45,12 @@ class TestConnection(unittest.TestCase):
         self.assertTrue(isinstance(x, pystart._connection._SingleConnection))
         self.assertRegex(x._get_config_string(None), "PBI=VIEWER")
 
+    def test_InteractiveConnection(self):
+        x = pystart.InteractiveConnection()
+
+        self.assertTrue(isinstance(x, pystart._connection._SingleConnection))
+        self.assertRegex(x._get_config_string(None), "PBI=INTERACTIVECONNECTION")
+
 
 if __name__ == "__main__":
     unittest.main()

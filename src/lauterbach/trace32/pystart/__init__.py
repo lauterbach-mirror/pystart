@@ -7,6 +7,7 @@ from ._connection import (
     GDBConnection,
     GDIConnection,
     HostConnection,
+    InteractiveConnection,
     IRISConnection,
     MCDConnection,
     MCILibConnection,
@@ -57,6 +58,7 @@ __all__ = [
     "SIMTSIConnection",
     "ViewerConnection",
     "TCPConnection",
+    "InteractiveConnection",
     # _settings
     "T32License",
     "T32Screen",
