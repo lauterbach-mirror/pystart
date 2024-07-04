@@ -28,6 +28,7 @@ __all__ = [
     "MDIConnection",
     "SCSConnection",
     "SIMTSIConnection",
+    "ViewerConnection",
     "TCPConnection",
 ]
 
@@ -393,6 +394,20 @@ class SimulatorConnection(_SingleConnection):
             return cfg.replace("PBI=", "PBI=*SIM") + "\nINSTANCE=AUTO"
         else:
             return "PBI=SIM"
+
+
+# TODO: Is there also a license connection like in SimulatorConnection?
+class ViewerConnection(_SingleConnection):
+    """Connection to perform off-line analysis of memory dumps and trace recordings
+
+    Available since TRACE32 build 158910.
+    """
+
+    def __init__(self) -> None:
+        super().__init__()
+
+    def _get_config_string(self, power_view: "PowerView") -> str:
+        return "PBI=VIEWER"
 
 
 class GDBConnection(_SingleConnection):

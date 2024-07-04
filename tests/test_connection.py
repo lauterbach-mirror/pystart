@@ -38,5 +38,13 @@ class TestCreateConnection(unittest.TestCase):
         con._get_config_string(None)
 
 
+class TestConnection(unittest.TestCase):
+    def test_ViewerConnection(self):
+        x = pystart.ViewerConnection()
+
+        self.assertTrue(isinstance(x, pystart._connection._SingleConnection))
+        self.assertRegex(x._get_config_string(None), "PBI=VIEWER")
+
+
 if __name__ == "__main__":
     unittest.main()
