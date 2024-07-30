@@ -23,6 +23,7 @@ powerview.wait()
 * use builtin `RuntimeError` instead of `AlreadyRunningError`
 * add `ViewerConnection`
 * add `InteractiveConnection`
+* put temporary config file also in T32TMP path
 
 ### v0.2.0
 * use binaries from `PATH` if no system_path is specified
