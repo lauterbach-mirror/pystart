@@ -140,12 +140,11 @@ class PowerView:
 
     def _create_config_file(self) -> str:
         dir = self.temp_path or defaults.temp_path or os.environ.get("T32TMP")
-        config_file = tempfile.NamedTemporaryFile("w+", delete=False, dir=dir)
-        config_string = self.get_configuration_string()
-        config_file.write(config_string)
-        config_file.close()
-        logger.debug(f"temporary config file created: {config_file.name}")
-        return config_file.name
+        with tempfile.NamedTemporaryFile("w+", delete=False, dir=dir) as config_file:
+            filename = config_file.name
+            config_file.write(self.get_configuration_string())
+        logger.debug(f"temporary config file created: {filename}")
+        return filename
 
     def _get_popen_args(self) -> List[str]:
         cmd = [str(self.executable), "--t32-bootstatus"]
