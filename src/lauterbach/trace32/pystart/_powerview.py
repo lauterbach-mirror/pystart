@@ -392,33 +392,23 @@ class PowerView:
 
     def _get_configuration_string_os(self) -> str:
         args = ["OS="]
-        T32ID = os.environ.get("T32ID")
-        if self.id:
-            args.append(f"ID={self.id}")
-        elif T32ID:
-            args.append(f"ID={T32ID}")
 
-        T32TMP = os.environ.get("T32TMP")
-        if self.temp_path:
-            args.append(f"TMP={self.temp_path}")
-        elif defaults.temp_path:
-            args.append(f"TMP={defaults.temp_path}")
-        elif T32TMP:
-            args.append(f"TMP={T32TMP}")
+        t32id = self.id or os.environ.get("T32ID")
+        if t32id:
+            args.append(f"ID={t32id}")
+
+        t32tmp = self.temp_path or defaults.temp_path or os.environ.get("T32TMP")
+        if t32tmp:
+            args.append(f"TMP={t32tmp}")
 
         # global system_path
-        T32SYS = os.environ.get("T32SYS")
-        if self.system_path:
-            args.append(f"SYS={self.system_path}")
-        elif defaults.system_path:
-            args.append(f"SYS={defaults.system_path}")
-        elif T32SYS:
-            args.append(f"SYS={T32SYS}")
+        t32sys = self.system_path or defaults.system_path or os.environ.get("T32SYS")
+        if t32sys:
+            args.append(f"SYS={t32sys}")
 
-        if self.help_path:
-            args.append(f"HELP={self.help_path}")
-        elif defaults.help_path:
-            args.append(f"HELP={defaults.help_path}")
+        help_path = self.help_path or defaults.help_path
+        if help_path:
+            args.append(f"HELP={help_path}")
 
         return "\n".join(args) if len(args) > 1 else ""
 
