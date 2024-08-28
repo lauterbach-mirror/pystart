@@ -180,9 +180,10 @@ class UDPConnection(_PBIConnection):
     """The key value specifies the node name of the PowerDebug device to connect to. This should be either a DNS
     name or an IP address."""
     port: int = 0
-    """UDP Port to which PowerView should send its packets. If 0, a default port is used."""
+    """UDP Port to which PowerView should send its packets on debugger module. If 0, a default port is used."""
     host_port: int = 0
-    """Outgoing UDP port number. If 0, a random port will be used by your OS."""
+    """Defines the UDP communication port from the debugger module to the host. If 0, an available port will be derived
+    from your OS."""
     max_udp_packet_size: int = 1024
     """Limit the maximum UDP packet size."""
     packet_burst_limitation: bool = False
@@ -190,7 +191,7 @@ class UDPConnection(_PBIConnection):
     compression: bool = False
     """If ``True`` reduces the packet size by compression."""
     delay: int = 0
-    """Delay in milliseconds."""
+    """Delay UDP packets send from host by specifed time in milliseconds."""
     connect_mode: ConnectMode = ConnectMode.NORMAL
     """Specify reaction if debugger is already in use."""
     exclusive: bool = False
@@ -244,7 +245,7 @@ class TCPConnection(_PBIConnection):
     """The key value specifies the node name of the PowerDebug device to connect to. This should be either a DNS
     name or an IP address."""
     port: int = 0
-    """TCP Port to which PowerView should send its packets. If 0, a default port is used."""
+    """TCP Port to which PowerView should send its packets on debugger module. If 0, a default port is used."""
     compression: bool = False
     """If ``True`` reduces the packet size by compression."""
     connect_mode: ConnectMode = ConnectMode.NORMAL
@@ -309,16 +310,20 @@ class CitrixConnection(_PBIConnection):
 
 @dataclass
 class USBProxyConnection(_PBIConnection):
-    """TRACE32 allows to communicate with a POWER DEBUG INTERFACE USB from a remote PC."""
+    """TRACE32 allows to communicate with a usb debug module from a remote PC.
+
+    In order to implement this communication, the command line tool ``t32tcpusb`` has to be started on the PC to which
+    the debug module is connected. ``t32tcpusb`` can be found in the ``bin/<target_os>`` directory of your TRACE32
+    installation (e.g. ``bin/windows64``).
+    """
 
     node_name: str
-    """The key value specifies the node name of the PowerDebug device to connect to. This should be either a DNS name or
-    an IP address."""
+    """DNS name or IP address of PC that runs ``t32tcpusb``."""
     port: int
-    """UDP Port to which PowerView should send its packets. If 0, a default port is used."""
+    """Port number that was specified when ``t32tcpusb`` was started."""
     device_name: str = ""
     """A name is required if several debug modules are connected via USB and used simultaneously.
-    The manufacturing default device name is the serial number of the debug module. e.g. NODE=E18110012345"""
+    The manufacturing default device name is the serial number of the debug module. e.g. ``NODE=E18110012345``"""
 
     def __post_init__(self) -> None:
         super().__init__()
