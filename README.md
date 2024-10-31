@@ -24,6 +24,7 @@ powerview.wait()
 * add `ViewerConnection`
 * add `InteractiveConnection`
 * put temporary config file also in T32TMP path
+* throw on premature termination of PowerView process
 
 ### v0.2.0
 * use binaries from `PATH` if no system_path is specified

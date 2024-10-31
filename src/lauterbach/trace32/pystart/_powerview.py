@@ -172,6 +172,7 @@ class PowerView:
             FileNotFoundError: if the executable can not be found within the specified path
             TimeoutError: after waiting for the time specified by `timeout`
             RuntimeError: if process is already running
+            ChildProcessError: if process terminated prematurely
         """
         if self._process and self._process.poll() is None:
             raise RuntimeError("process is already running")
@@ -182,7 +183,7 @@ class PowerView:
         if delay is not None:
             timeout = delay
 
-        if platform.system() == "Windows" and not self._screen_off:
+        if platform.system() == "Windows" and not self._screen_off and delay is None:
             logger.debug("create Windows event for waiting until PowerView has started")
             t = threading.Thread(
                 target=_wait_started_windows_signal, args=(self._event_started, timeout + 1), daemon=True
@@ -205,10 +206,15 @@ class PowerView:
         )
         self._thread_stdout.start()
         self._thread_stderr.start()
+        threading.Thread(
+            target=_event_on_terminate, args=(self._process, self._event_started, timeout), daemon=True
+        ).start()
 
         logger.info("waiting for start of PowerView instance")
         if not self._event_started.wait(timeout) and delay is None:
             raise TimeoutError("Timeout expired on waiting for complete start of PowerView")
+        if self._process.poll() is not None:
+            raise ChildProcessError("PowerView instance terminated prematurely")
         logger.info("PowerView instance started")
 
     def wait(self, timeout: Optional[float] = None) -> None:
@@ -498,18 +504,34 @@ def _wait_started_windows_signal(event_started: threading.Event, timeout: float)
     assert event != ctypes.c_long(0), "no eventhandler was created"
     rc = ctypes.windll.kernel32.WaitForSingleObject(event, int(timeout * 1000))
     if rc == WAIT_TIMEOUT:
-        logger.error("timeout expired on waiting for Windows event")
+        if event_started.is_set():
+            logger.debug("ignoring Windows event timeout because of formerly event_started")
+        else:
+            logger.error("timeout expired on waiting for Windows event")
     elif rc == WAIT_FAILED:
         logger.error("waiting for Windows event failed (WAIT_FAILED)")
     else:
-        logger.debug("received T32_STARTUP_COMPLETED event")
+        logger.debug("set event_started due to received T32_STARTUP_COMPLETED event")
         event_started.set()
+
+
+def _event_on_terminate(process: subprocess.Popen[str], event_started: threading.Event, timeout: float) -> None:
+    try:
+        process.wait(timeout + 1)
+    except subprocess.TimeoutExpired:
+        return
+    logger.debug("Process terminated formerly")
+    event_started.set()
 
 
 def _handle_console_out(stdout: TextIO, console_logger: logging.Logger, event_started: threading.Event) -> None:
     for line in stdout:
         line = line.rstrip()
         if line == "TRACE32 is up and running...":
+            logger.debug('set event_started due to "TRACE32 is up and running..." message')
+            event_started.set()
+        elif line.startswith("Fatal Error:"):
+            logger.debug('set event_started due to "Fatal Error"')
             event_started.set()
         console_logger.info(line)
 
