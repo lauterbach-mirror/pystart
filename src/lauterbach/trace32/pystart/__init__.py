@@ -7,6 +7,7 @@ from ._connection import (
     GDBConnection,
     GDIConnection,
     HostConnection,
+    InteractiveConnection,
     IRISConnection,
     MCDConnection,
     MCILibConnection,
@@ -20,6 +21,7 @@ from ._connection import (
     UDPConnection,
     USBConnection,
     USBProxyConnection,
+    ViewerConnection,
 )
 from ._exceptions import AlreadyRunningError, TimeoutExpiredError
 from ._interface import (
@@ -54,7 +56,9 @@ __all__ = [
     "MDIConnection",
     "SCSConnection",
     "SIMTSIConnection",
+    "ViewerConnection",
     "TCPConnection",
+    "InteractiveConnection",
     # _settings
     "T32License",
     "T32Screen",

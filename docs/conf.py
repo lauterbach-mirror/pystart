@@ -17,8 +17,6 @@ import sys
 
 sys.path.insert(0, os.path.abspath("../"))
 
-from lauterbach.trace32.rcl.version import __version__
-
 # -- Project information -----------------------------------------------------
 
 project = "pystart"

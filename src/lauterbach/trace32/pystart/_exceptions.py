@@ -1,7 +1,5 @@
-class TimeoutExpiredError(Exception):
-    pass
+TimeoutExpiredError = TimeoutError
+"""Alias to `TimeoutError` to keep compatibility"""
 
-
-class AlreadyRunningError(Exception):
-    def __init__(self) -> None:
-        super().__init__("For this instance there is already a TRACE32 instance running")
+AlreadyRunningError = RuntimeError
+"""Alias to `RuntimeError` to keep compatibility"""

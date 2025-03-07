@@ -19,6 +19,15 @@ powerview.wait()
 ```
 
 ## Release Notes
+### v0.2.1
+* use builtin `TimeoutError` instead of `TimeoutExpiredError`
+* use builtin `RuntimeError` instead of `AlreadyRunningError`
+* add `ViewerConnection`
+* add `InteractiveConnection`
+* put temporary config file also in T32TMP path
+* throw on premature termination of PowerView process
+* add `device_path` option to `USBConnection` and `USBProxyConnection`
+
 ### v0.2.0
 * use binaries from `PATH` if no system_path is specified
 * gently stop Trace32 on Windows OS

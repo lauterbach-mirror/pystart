@@ -1,4 +1,5 @@
 import enum
+import platform
 from abc import abstractmethod
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, List, Optional
@@ -28,7 +29,9 @@ __all__ = [
     "MDIConnection",
     "SCSConnection",
     "SIMTSIConnection",
+    "ViewerConnection",
     "TCPConnection",
+    "InteractiveConnection",
 ]
 
 
@@ -135,6 +138,8 @@ class USBConnection(_PBIConnection):
     device_name: str = ""
     """A name is required if several debug modules are connected via USB and used simultaneously.
     The manufacturing default device name is the serial number of the debug module. e.g. NODE=E18110012345"""
+    device_path: "PathType" = ""
+    """Linux only: Use this option to select the debug module to use if several debug modules are connected via USB."""
     connect_mode: ConnectMode = ConnectMode.NORMAL
     """Specify reaction if debugger is already in use."""
     exclusive: bool = False
@@ -147,6 +152,8 @@ class USBConnection(_PBIConnection):
         args = ["PBI=", "USB"]
         if self.device_name:
             args.append(f"NODE={self.device_name}")
+        if self.device_path and platform.system() == "Linux":
+            args.append(f"DEVPATH={self.device_path}")
         if self.connect_mode is not ConnectMode.NORMAL:
             args.append(f"CONNECTIONMODE={self.connect_mode.name}")
         return "\n".join(args)
@@ -178,9 +185,10 @@ class UDPConnection(_PBIConnection):
     """The key value specifies the node name of the PowerDebug device to connect to. This should be either a DNS
     name or an IP address."""
     port: int = 0
-    """UDP Port to which PowerView should send its packets. If 0, a default port is used."""
+    """UDP Port to which PowerView should send its packets on debugger module. If 0, a default port is used."""
     host_port: int = 0
-    """Outgoing UDP port number. If 0, a random port will be used by your OS."""
+    """Defines the UDP communication port from the debugger module to the host. If 0, an available port will be derived
+    from your OS."""
     max_udp_packet_size: int = 1024
     """Limit the maximum UDP packet size."""
     packet_burst_limitation: bool = False
@@ -188,7 +196,7 @@ class UDPConnection(_PBIConnection):
     compression: bool = False
     """If ``True`` reduces the packet size by compression."""
     delay: int = 0
-    """Delay in milliseconds."""
+    """Delay UDP packets send from host by specifed time in milliseconds."""
     connect_mode: ConnectMode = ConnectMode.NORMAL
     """Specify reaction if debugger is already in use."""
     exclusive: bool = False
@@ -242,7 +250,7 @@ class TCPConnection(_PBIConnection):
     """The key value specifies the node name of the PowerDebug device to connect to. This should be either a DNS
     name or an IP address."""
     port: int = 0
-    """TCP Port to which PowerView should send its packets. If 0, a default port is used."""
+    """TCP Port to which PowerView should send its packets on debugger module. If 0, a default port is used."""
     compression: bool = False
     """If ``True`` reduces the packet size by compression."""
     connect_mode: ConnectMode = ConnectMode.NORMAL
@@ -307,16 +315,22 @@ class CitrixConnection(_PBIConnection):
 
 @dataclass
 class USBProxyConnection(_PBIConnection):
-    """TRACE32 allows to communicate with a POWER DEBUG INTERFACE USB from a remote PC."""
+    """TRACE32 allows to communicate with a usb debug module from a remote PC.
+
+    In order to implement this communication, the command line tool ``t32tcpusb`` has to be started on the PC to which
+    the debug module is connected. ``t32tcpusb`` can be found in the ``bin/<target_os>`` directory of your TRACE32
+    installation (e.g. ``bin/windows64``).
+    """
 
     node_name: str
-    """The key value specifies the node name of the PowerDebug device to connect to. This should be either a DNS name or
-    an IP address."""
+    """DNS name or IP address of PC that runs ``t32tcpusb``."""
     port: int
-    """UDP Port to which PowerView should send its packets. If 0, a default port is used."""
+    """Port number that was specified when ``t32tcpusb`` was started."""
     device_name: str = ""
     """A name is required if several debug modules are connected via USB and used simultaneously.
-    The manufacturing default device name is the serial number of the debug module. e.g. NODE=E18110012345"""
+    The manufacturing default device name is the serial number of the debug module. e.g. ``NODE=E18110012345``"""
+    device_path: "PathType" = ""
+    """Linux only: Use this option to select the debug module to use if several debug modules are connected via USB."""
 
     def __post_init__(self) -> None:
         super().__init__()
@@ -325,6 +339,8 @@ class USBProxyConnection(_PBIConnection):
         args = ["PBI=", "USB"]
         if self.device_name:
             args.append(f"NODE={self.device_name}")
+        if self.device_path and platform.system() == "Linux":
+            args.append(f"DEVPATH={self.device_path}")
         args.extend((f"PROXYNAME={self.node_name}", f"PROXYPORT={self.port}"))
         return "\n".join(args)
 
@@ -393,6 +409,34 @@ class SimulatorConnection(_SingleConnection):
             return cfg.replace("PBI=", "PBI=*SIM") + "\nINSTANCE=AUTO"
         else:
             return "PBI=SIM"
+
+
+# TODO: Is there also a license connection like in SimulatorConnection?
+class ViewerConnection(_SingleConnection):
+    """Connection to perform off-line analysis of memory dumps and trace recordings
+
+    Available since TRACE32 build 158910.
+    """
+
+    def __init__(self) -> None:
+        super().__init__()
+
+    def _get_config_string(self, power_view: "PowerView") -> str:
+        return "PBI=VIEWER"
+
+
+class InteractiveConnection(_SingleConnection):
+    """This mode allows to start PowerView without a connection to a debug module / simulator etc.
+    Several windows will guide through the connection process.
+
+    Available since TRACE32 build 167333.
+    """
+
+    def __init__(self) -> None:
+        super().__init__()
+
+    def _get_config_string(self, power_view: "PowerView") -> str:
+        return "PBI=INTERACTIVECONNECTION"
 
 
 class GDBConnection(_SingleConnection):
