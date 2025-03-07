@@ -19,6 +19,7 @@ powerview.wait()
 ```
 
 ## Release Notes
+### v0.2.1
 * use builtin `TimeoutError` instead of `TimeoutExpiredError`
 * use builtin `RuntimeError` instead of `AlreadyRunningError`
 * add `ViewerConnection`
