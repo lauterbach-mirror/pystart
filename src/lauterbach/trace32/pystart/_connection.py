@@ -1,4 +1,5 @@
 import enum
+import platform
 from abc import abstractmethod
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, List, Optional
@@ -137,6 +138,8 @@ class USBConnection(_PBIConnection):
     device_name: str = ""
     """A name is required if several debug modules are connected via USB and used simultaneously.
     The manufacturing default device name is the serial number of the debug module. e.g. NODE=E18110012345"""
+    device_path: "PathType" = ""
+    """Linux only: Use this option to select the debug module to use if several debug modules are connected via USB."""
     connect_mode: ConnectMode = ConnectMode.NORMAL
     """Specify reaction if debugger is already in use."""
     exclusive: bool = False
@@ -149,6 +152,8 @@ class USBConnection(_PBIConnection):
         args = ["PBI=", "USB"]
         if self.device_name:
             args.append(f"NODE={self.device_name}")
+        if self.device_path and platform.system() == "Linux":
+            args.append(f"DEVPATH={self.device_path}")
         if self.connect_mode is not ConnectMode.NORMAL:
             args.append(f"CONNECTIONMODE={self.connect_mode.name}")
         return "\n".join(args)
@@ -324,6 +329,8 @@ class USBProxyConnection(_PBIConnection):
     device_name: str = ""
     """A name is required if several debug modules are connected via USB and used simultaneously.
     The manufacturing default device name is the serial number of the debug module. e.g. ``NODE=E18110012345``"""
+    device_path: "PathType" = ""
+    """Linux only: Use this option to select the debug module to use if several debug modules are connected via USB."""
 
     def __post_init__(self) -> None:
         super().__init__()
@@ -332,6 +339,8 @@ class USBProxyConnection(_PBIConnection):
         args = ["PBI=", "USB"]
         if self.device_name:
             args.append(f"NODE={self.device_name}")
+        if self.device_path and platform.system() == "Linux":
+            args.append(f"DEVPATH={self.device_path}")
         args.extend((f"PROXYNAME={self.node_name}", f"PROXYPORT={self.port}"))
         return "\n".join(args)
 

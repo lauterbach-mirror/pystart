@@ -25,6 +25,7 @@ powerview.wait()
 * add `InteractiveConnection`
 * put temporary config file also in T32TMP path
 * throw on premature termination of PowerView process
+* add `device_path` option to `USBConnection` and `USBProxyConnection`
 
 ### v0.2.0
 * use binaries from `PATH` if no system_path is specified
