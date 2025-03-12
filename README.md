@@ -19,6 +19,9 @@ powerview.wait()
 ```
 
 ## Release Notes
+### next Release
+* add settings `REMOTEHOSTALLOW` and `REMOTEHOSTDENY` for some T32Interfaces
+
 ### v0.2.1
 * use builtin `TimeoutError` instead of `TimeoutExpiredError`
 * use builtin `RuntimeError` instead of `AlreadyRunningError`

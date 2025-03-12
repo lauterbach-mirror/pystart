@@ -27,6 +27,11 @@ class RCLInterface(T32Interface):
     """Starting from the TRACE32 release 09.2020, the API supports per default TCP socket
     streams. Previous TRACE32 versions only support a communication via UDP
     sockets."""
+    allow_remote_host: Optional[bool] = None
+    """If set to `false`, only connections from `localhost` are allowed. If set to `true` also connections from remote
+    hosts != localhost are allowed. If set to `None`, the default set in Trace32 is used.
+
+    Available since TRACE32 build 172541."""
 
     def _get_config_string(self) -> str:
         interface_name = self._RCL_PROTOCOLS[self.protocol]
@@ -37,6 +42,8 @@ class RCLInterface(T32Interface):
         ]
         if interface_name == "NETASSIST":
             args.append(f"PACKLEN={self.packlen}")
+        if self.allow_remote_host is not None:
+            args.append("REMOTEHOSTALLOW" if self.allow_remote_host else "REMOTEHOSTDENY")
         return "\n".join(args)
 
     @classmethod
@@ -123,11 +130,18 @@ class TCFInterface(T32Interface):
 
     port: Optional[int] = None
     """Lets the TRACE32 instance listen to the TCP port. ``None`` is used for TCF's default port."""
+    allow_remote_host: Optional[bool] = None
+    """If set to `false`, only connections from `localhost` are allowed. If set to `true` also connections from remote
+    hosts != localhost are allowed. If set to `None`, the default set in Trace32 is used.
+
+    Available since TRACE32 build 172541."""
 
     def _get_config_string(self) -> str:
         args = ["TCF="]
         if self.port is not None:
             args.append(f"PORT={self.port}")
+        if self.allow_remote_host is not None:
+            args.append("REMOTEHOSTALLOW" if self.allow_remote_host else "REMOTEHOSTDENY")
         return "\n".join(args)
 
     @classmethod
@@ -141,9 +155,16 @@ class SimulinkInterface(T32Interface):
 
     port: int
     """Lets the TRACE32 instance listen to the UDP port."""
+    allow_remote_host: Optional[bool] = None
+    """If set to `false`, only connections from `localhost` are allowed. If set to `true` also connections from remote
+    hosts != localhost are allowed. If set to `None`, the default set in Trace32 is used.
+
+    Available since TRACE32 build 172541."""
 
     def _get_config_string(self) -> str:
         args = ["SIMULINK=NETASSIST", f"PORT={self.port}"]
+        if self.allow_remote_host is not None:
+            args.append("REMOTEHOSTALLOW" if self.allow_remote_host else "REMOTEHOSTDENY")
         return "\n".join(args)
 
     @classmethod

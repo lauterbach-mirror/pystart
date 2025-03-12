@@ -144,5 +144,38 @@ class TestAddInterface(unittest.TestCase):
         self.assertRegex(x, re.compile("^PORT=1234$", flags=re.MULTILINE))
 
 
+class TestInterface_AllowRemoteHost(unittest.TestCase):
+    INTERFACES_OF_INTEREST = [RCLInterface, TCFInterface, SimulinkInterface]
+    REMOTEHOSTALLOW = re.compile("^REMOTEHOSTALLOW$", flags=re.MULTILINE)
+    REMOTEHOSTDENY = re.compile("^REMOTEHOSTDENY$", flags=re.MULTILINE)
+
+    def test_remotehostallow(self):
+        kwargs = {"allow_remote_host": True}
+        for interface in self.INTERFACES_OF_INTEREST:
+            args = INTERFACES[interface]["DEFAULTARGS"]
+            with self.subTest(interface=interface.__name__):
+                config_string = interface(*args, **kwargs)._get_config_string()
+                self.assertRegex(config_string, self.REMOTEHOSTALLOW)
+                self.assertNotRegex(config_string, self.REMOTEHOSTDENY)
+
+    def test_remotehostdeny(self):
+        kwargs = {"allow_remote_host": False}
+        for interface in self.INTERFACES_OF_INTEREST:
+            args = INTERFACES[interface]["DEFAULTARGS"]
+            with self.subTest(interface=interface.__name__):
+                config_string = interface(*args, **kwargs)._get_config_string()
+                self.assertNotRegex(config_string, self.REMOTEHOSTALLOW)
+                self.assertRegex(config_string, self.REMOTEHOSTDENY)
+
+    def test_remotehostnone(self):
+        kwargs = {"allow_remote_host": None}
+        for interface in self.INTERFACES_OF_INTEREST:
+            args = INTERFACES[interface]["DEFAULTARGS"]
+            with self.subTest(interface=interface.__name__):
+                config_string = interface(*args, **kwargs)._get_config_string()
+                self.assertNotRegex(config_string, self.REMOTEHOSTALLOW)
+                self.assertNotRegex(config_string, self.REMOTEHOSTDENY)
+
+
 if __name__ == "__main__":
     unittest.main()
