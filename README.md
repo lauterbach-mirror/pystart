@@ -19,7 +19,7 @@ powerview.wait()
 ```
 
 ## Release Notes
-### next Release
+### v0.3.0
 * add settings `REMOTEHOSTALLOW` and `REMOTEHOSTDENY` for some T32Interfaces
 
 ### v0.2.1
