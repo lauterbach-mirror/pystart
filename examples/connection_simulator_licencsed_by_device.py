@@ -7,7 +7,7 @@ from lauterbach.trace32.pystart import (
     USBConnection,
 )
 
-license_connection = USBConnection("Name", ConnectMode.QUERYCONNECT, True)
+license_connection = USBConnection("Name", connect_mode=ConnectMode.QUERYCONNECT, exclusive=True)
 
 connection = SimulatorConnection(license_connection=license_connection)
 
