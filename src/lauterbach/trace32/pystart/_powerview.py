@@ -140,6 +140,12 @@ class PowerView:
         if self._config_file_name:
             os.remove(self._config_file_name)
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.stop()
+
     def _create_config_file(self) -> str:
         dir = self.temp_path or defaults.temp_path or os.environ.get("T32TMP")
         with tempfile.NamedTemporaryFile("w+", delete=False, dir=dir) as config_file:
