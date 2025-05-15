@@ -19,6 +19,10 @@ powerview.wait()
 ```
 
 ## Release Notes
+### v0.4.0
+* fix broken compatibility to python <3.9
+* allow `PowerView` to be used as ContextManager
+
 ### v0.3.0
 * add settings `REMOTEHOSTALLOW` and `REMOTEHOSTDENY` for some T32Interfaces
 

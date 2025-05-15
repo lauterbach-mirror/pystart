@@ -23,7 +23,9 @@ For starting TRACE32 follow these steps:
 #. Do your work.
 #. Either :meth:`~lauterbach.trace32.pystart.PowerView.wait` for termination or
    :meth:`~lauterbach.trace32.pystart.PowerView.stop` the :class:`~lauterbach.trace32.pystart.PowerView` instance
-   manually.
+   manually. To make sure even in case of errors the :class:`~lauterbach.trace32.pystart.PowerView` instance is
+   properly terminated, you can use it as a context manager which will implicitly call
+   :meth:`~lauterbach.trace32.pystart.PowerView.stop` on exit.
 
 ****************************
 Minimal USB debugger example
