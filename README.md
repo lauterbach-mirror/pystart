@@ -19,7 +19,8 @@ powerview.wait()
 ```
 
 ## Release Notes
-### next Release
+### v0.4.0
+* fix broken compatibility to python <3.9
 * allow `PowerView` to be used as ContextManager
 
 ### v0.3.0
