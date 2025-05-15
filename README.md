@@ -19,6 +19,9 @@ powerview.wait()
 ```
 
 ## Release Notes
+### next Release
+* allow `PowerView` to be used as ContextManager
+
 ### v0.3.0
 * add settings `REMOTEHOSTALLOW` and `REMOTEHOSTDENY` for some T32Interfaces
 
