@@ -11,6 +11,7 @@ import subprocess
 import tempfile
 import threading
 from abc import ABC, abstractmethod
+from types import TracebackType
 from typing import Any, Dict, Iterable, List, Optional, TextIO, Union
 
 PathType = Union[str, pathlib.Path]
@@ -140,6 +141,14 @@ class PowerView:
         if self._config_file_name:
             os.remove(self._config_file_name)
 
+    def __enter__(self) -> PowerView:
+        return self
+
+    def __exit__(
+        self, exc_type: type[BaseException], exc_value: Optional[BaseException], traceback: Optional[TracebackType]
+    ) -> None:
+        self.stop()
+
     def _create_config_file(self) -> str:
         dir = self.temp_path or defaults.temp_path or os.environ.get("T32TMP")
         with tempfile.NamedTemporaryFile("w+", delete=False, dir=dir) as config_file:
@@ -161,7 +170,7 @@ class PowerView:
                 cmd.extend(self.startup_parameter)
         return cmd
 
-    def start(self, *, timeout: float = 20.0, delay: Optional[float] = None) -> None:
+    def start(self, *, timeout: float = 20.0, delay: Optional[float] = None) -> PowerView:
         """generates a config file, starts TRACE32 and blocks until TRACE32 has fully started
 
         Args:
@@ -169,6 +178,9 @@ class PowerView:
             delay: (deprecated) If not `None` value is used to overwrite `timeout` parameter, at the same time
                     `TimeoutError` exception is disabled. Please set `delay` parameter to an appropriate value
                     for TRACE32 installations with a build number below 166336.
+
+        Returns:
+            self
 
         Raises:
             FileNotFoundError: if the executable can not be found within the specified path
@@ -218,6 +230,7 @@ class PowerView:
         if self._process.poll() is not None:
             raise ChildProcessError("PowerView instance terminated prematurely")
         logger.info("PowerView instance started")
+        return self
 
     def wait(self, timeout: Optional[float] = None) -> None:
         """wait for process to terminate
