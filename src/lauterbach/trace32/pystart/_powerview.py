@@ -133,6 +133,8 @@ class PowerView:
         self.startup_parameter: Iterable[str] = []
         """Parameter for ``startup_script``. If you want to retrieve the parameters by ``PARAMETERS`` command, consider
         adding additional quotes at beginning and ending of each string."""
+        self.connection_script: "PathType" = ""
+        """A cmm script being executded immediately after PowerView started."""
         self.safe_start: bool = False
         """Suppresses the automatic execution of any PRACTICE script after starting TRACE32. This allows you to test or
         debug the scripts that are normally executed automatically."""
@@ -163,9 +165,10 @@ class PowerView:
             cmd.append("--t32-safestart")
         self._config_file_name = self._create_config_file()
         cmd.extend(["-c", self._config_file_name])
+        if self.connection_script:
+            cmd.extend(["-e", str(self.connection_script)])
         if self.startup_script:
-            cmd.append("-s")
-            cmd.append(str(self.startup_script))
+            cmd.extend(["-s", str(self.startup_script)])
             if self.startup_parameter:
                 cmd.extend(self.startup_parameter)
         return cmd
@@ -349,13 +352,6 @@ class PowerView:
             extension = ".exe"
             if not self.force_32bit_executable:
                 sys_specific += "64"
-
-        path = pathlib.Path(system_path, "bin", sys_specific, f"{self.target}{extension}")
-        if path.exists():
-            return path
-
-        if system == "Windows" and not self.force_32bit_executable:
-            sys_specific = _BIN_SUBFOLDER[system]
         return pathlib.Path(system_path, "bin", sys_specific, f"{self.target}{extension}")
 
     def add_interface(self, interface: "T32Interface") -> "T32Interface":

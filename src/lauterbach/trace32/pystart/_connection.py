@@ -426,8 +426,8 @@ class ViewerConnection(_SingleConnection):
 
 
 class InteractiveConnection(_SingleConnection):
-    """This mode allows to start PowerView without a connection to a debug module / simulator etc.
-    Several windows will guide through the connection process.
+    """Start TRACE32 PowerView into the Interactive Connection Mode. In this mode, the connection to a debug module,
+    simulator or other solutions is done in the GUI or per script after starting PowerView.
 
     Available since TRACE32 build 167333.
     """
@@ -436,7 +436,7 @@ class InteractiveConnection(_SingleConnection):
         super().__init__()
 
     def _get_config_string(self, power_view: "PowerView") -> str:
-        return "PBI=INTERACTIVECONNECTION"
+        return "PBI=InteractiveConnectionMode"
 
 
 class GDBConnection(_SingleConnection):
