@@ -19,7 +19,7 @@ powerview.wait()
 ```
 
 ## Release Notes
-### vX.X.X
+### v0.5.0
 * add `connection_script` setting
 * fix InteractiveConnection
 * start windows 32bit executable only if `force_32bit_executable==True`, don't search for it, if 64bit executable is not available
