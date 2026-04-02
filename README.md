@@ -19,6 +19,9 @@ powerview.wait()
 ```
 
 ## Release Notes
+### vX.X.X
+* fix InteractiveConnection
+
 ### v0.4.0
 * fix broken compatibility to python <3.9
 * allow `PowerView` to be used as ContextManager
