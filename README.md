@@ -20,6 +20,7 @@ powerview.wait()
 
 ## Release Notes
 ### vX.X.X
+* add `connection_script` setting
 * fix InteractiveConnection
 
 ### v0.4.0
