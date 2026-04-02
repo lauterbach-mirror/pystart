@@ -352,13 +352,6 @@ class PowerView:
             extension = ".exe"
             if not self.force_32bit_executable:
                 sys_specific += "64"
-
-        path = pathlib.Path(system_path, "bin", sys_specific, f"{self.target}{extension}")
-        if path.exists():
-            return path
-
-        if system == "Windows" and not self.force_32bit_executable:
-            sys_specific = _BIN_SUBFOLDER[system]
         return pathlib.Path(system_path, "bin", sys_specific, f"{self.target}{extension}")
 
     def add_interface(self, interface: "T32Interface") -> "T32Interface":
