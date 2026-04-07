@@ -135,6 +135,9 @@ class PowerView:
         adding additional quotes at beginning and ending of each string."""
         self.connection_script: "PathType" = ""
         """A cmm script being executded immediately after PowerView started."""
+        self.connection_parameter: Iterable[str] = []
+        """Parameter for ``connection_script``.
+        Elements must not start with a hyphen and must not contain any commas."""
         self.safe_start: bool = False
         """Suppresses the automatic execution of any PRACTICE script after starting TRACE32. This allows you to test or
         debug the scripts that are normally executed automatically."""
@@ -163,10 +166,12 @@ class PowerView:
         cmd = [str(self.executable), "--t32-bootstatus"]
         if self.startup_script and self.safe_start:
             cmd.append("--t32-safestart")
-        self._config_file_name = self._create_config_file()
-        cmd.extend(["-c", self._config_file_name])
         if self.connection_script:
             cmd.extend(["-e", str(self.connection_script)])
+            if self.connection_parameter:
+                cmd.extend(self.connection_parameter)
+        self._config_file_name = self._create_config_file()
+        cmd.extend(["-c", self._config_file_name])
         if self.startup_script:
             cmd.extend(["-s", str(self.startup_script)])
             if self.startup_parameter:
