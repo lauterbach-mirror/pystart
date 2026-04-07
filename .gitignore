@@ -1,4 +1,7 @@
 # ---> Python
+# version gets build dynamically
+src/lauterbach/trace32/pystart/__version__.py
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

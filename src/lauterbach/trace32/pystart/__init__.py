@@ -1,4 +1,8 @@
-from .__version__ import __version__  # noqa: F401
+try:
+    from .__version__ import __version__  # noqa: F401
+except ImportError:
+    __version__ = "unknown version"
+
 from ._connection import (
     ARCINTConnection,
     CADIConnection,
