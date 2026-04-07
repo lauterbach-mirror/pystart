@@ -5,7 +5,34 @@ requires = ["setuptools>=80", "wheel", "setuptools-scm>=8"]
 build-backend = "setuptools.build_meta"
 
 [project]
-dynamic = ["version"]
+name = "lauterbach-trace32-pystart"
+authors = [{name= "Lauterbach GmbH", email = "support@lauterbach.com"}]
+description = "start Lauterbach TRACE32"
+requires-python = ">=3.7"
+license = "MIT"
+license-files = ["LICENSE"]
+classifiers = [
+	"Programming Language :: Python :: 3",
+	"Programming Language :: Python :: 3.7",
+	"Operating System :: OS Independent",
+	"Topic :: Software Development :: Debuggers",
+	"Intended Audience :: Developers"
+]
+dynamic = ["version", "readme"]
+
+[project.urls]
+Homepage = "https://www.lauterbach.com"
+Repository = "https://gitlab.com/lauterbach/pystart"
+Documentation = "https://lauterbach-trace32-pystart.readthedocs.io"
+
+[tool.setuptools.dynamic]
+readme = {file = ["README.md"], content-type="text/markdown"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"*" = ["py.typed"]
 
 [tool.setuptools_scm]
 version_file = "src/lauterbach/trace32/pystart/__version__.py"
