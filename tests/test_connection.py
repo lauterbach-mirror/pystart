@@ -28,7 +28,7 @@ class TestConnection(unittest.TestCase):
         x = pystart.InteractiveConnection()
 
         self.assertTrue(isinstance(x, pystart._connection._SingleConnection))
-        self.assertRegex(x._get_config_string(None), re.compile("^PBI=INTERACTIVECONNECTION$", flags=re.MULTILINE))
+        self.assertRegex(x._get_config_string(None), re.compile("^PBI=InteractiveConnectionMode$", flags=re.MULTILINE))
 
 
 if __name__ == "__main__":
