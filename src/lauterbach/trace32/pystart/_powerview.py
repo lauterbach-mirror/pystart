@@ -143,6 +143,8 @@ class PowerView:
         self.safe_start: bool = False
         """Suppresses the automatic execution of any PRACTICE script after starting TRACE32. This allows you to test or
         debug the scripts that are normally executed automatically."""
+        self.args: Iterable[str] = []
+        """Additional command line options for starting TRACE32."""
 
     def __del__(self) -> None:
         if self._config_file_name:
@@ -168,6 +170,7 @@ class PowerView:
         cmd = [str(self.executable), "--t32-bootstatus"]
         if self.startup_script and self.safe_start:
             cmd.append("--t32-safestart")
+        cmd.extend(self.args)
         if self.connection_script:
             cmd.extend(["-e", str(self.connection_script)])
             if self.connection_parameter:

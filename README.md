@@ -22,6 +22,7 @@ powerview.wait()
 ### vX.X.X
 * add parameter setting for `connection_script`.
 * Make `Connection` optional for `connection_script` not being ignored.
+* add generic argument setting for starting TRACE32.
 
 ### v0.5.0
 * add `connection_script` setting
