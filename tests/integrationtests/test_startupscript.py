@@ -20,7 +20,7 @@ pstep ; extend lifetime of PRIVATE parameters
 """
 
 
-def setUpModule():
+def setUpModule() -> None:
     dotenv.load_dotenv()
 
 
@@ -30,13 +30,13 @@ class TestRunWithStartupScript(unittest.TestCase):
     _rcl_ports = itertools.count(20000)
 
     @classmethod
-    def setUpClass(cls):
+    def setUpClass(cls) -> None:
         with tempfile.NamedTemporaryFile("w", suffix=".cmm", delete=False) as f:
             cls._startup_script = f.name
             f.write(STARTUP_SCRIPT_CONTENT)
 
     @classmethod
-    def tearDownClass(cls):
+    def tearDownClass(cls) -> None:
         os.remove(cls._startup_script)
 
     def setUp(self) -> None:
@@ -44,12 +44,12 @@ class TestRunWithStartupScript(unittest.TestCase):
         self.pv = pystart.PowerView(pystart.SimulatorConnection(), self.target)
         self.pv.startup_script = self._startup_script
 
-    def test_no_parameter_without_script(self):
+    def test_no_parameter_without_script(self) -> None:
         self.pv.startup_script = None
         self.pv.startup_parameter = ["PARAMETER"]
         self.assertNotIn("PARAMETER", self.pv._get_popen_args())
 
-    def test_parameter_and_script_list(self):
+    def test_parameter_and_script_list(self) -> None:
         self.pv.startup_parameter = ["PARAMETER1", "PARAMETER2"]
 
         args = self.pv._get_popen_args()
@@ -59,7 +59,7 @@ class TestRunWithStartupScript(unittest.TestCase):
         self.assertEqual(args[idx + 2], "PARAMETER1")
         self.assertEqual(args[idx + 3], "PARAMETER2")
 
-    def test_startup_parameter_list(self):
+    def test_startup_parameter_list(self) -> None:
         self.pv.startup_parameter = ["a", "b c", '"d"', "KEY=value with space"]
         expected = {
             "%LINE": {
@@ -75,7 +75,7 @@ class TestRunWithStartupScript(unittest.TestCase):
         }
         self._check_macros(expected)
 
-    def test_startup_parameter_quoted(self):
+    def test_startup_parameter_quoted(self) -> None:
         self.pv.startup_parameter = ['"a"', '"b c"', '"d"', '"KEY=value with space"']
         expected = {
             "PARAMETERS": {

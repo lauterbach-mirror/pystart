@@ -30,3 +30,4 @@ repos:
     hooks:
     -   id: mypy
         additional_dependencies: [types-setuptools]
+        exclude: tests

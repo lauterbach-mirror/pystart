@@ -50,8 +50,7 @@ max-line-length = 120
 [tool.mypy]
 python_version = 3.7                                   # for other occurrences search for python_version
 strict = true
-exclude = "(build|dist|doc|.*.egg-info|_functions.py)" # ignoring functions.py because it is a huge file
-
-[[tool.mypy.overrides]]
-module = 'tests.*'
-disallow_untyped_defs = false # Allows defining functions without type annotations or with incomplete type annotations.
+files = "src/**/*.py"
+exclude = [
+	'_functions\.py$' # ignoring functions.py because it is a huge file
+]

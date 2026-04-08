@@ -23,7 +23,7 @@ class TestPBIConnection(unittest.TestCase):
     def setUp(self) -> None:
         self.connection = TestPBIConnection.PBIConMock()
 
-    def test_add(self):
+    def test_add(self) -> None:
         mock1 = MagicMock()
         mock2 = MagicMock()
 
@@ -38,7 +38,7 @@ class TestPBIConnection(unittest.TestCase):
         self.assertIs(r[0][0], mock1)
         self.assertIs(r[2][0], mock2)
 
-    def test_get_core_num_single(self):
+    def test_get_core_num_single(self) -> None:
         mock1 = MagicMock()
         mock2 = MagicMock()
 
@@ -50,7 +50,7 @@ class TestPBIConnection(unittest.TestCase):
         core_num2 = self.connection._get_core_num(mock2)
         self.assertEqual(core_num2, 0)
 
-    def test_get_core_num_multiple(self):
+    def test_get_core_num_multiple(self) -> None:
         dev_pbi0 = [MagicMock() for _ in range(3)]
         dev_pbi3 = [MagicMock() for _ in range(5)]
 
@@ -66,13 +66,13 @@ class TestPBIConnection(unittest.TestCase):
             core_num = self.connection._get_core_num(dev)
             self.assertEqual(core_num, i)
 
-    def test_get_pbi_string_single_device(self):
+    def test_get_pbi_string_single_device(self) -> None:
         mock1 = MagicMock()
         self.connection._register(mock1)
         pbi_str = self.connection._get_pbi_string(mock1)
         self.assertEqual(pbi_str, "")
 
-    def test_get_pbi_string_multiple_device(self):
+    def test_get_pbi_string_multiple_device(self) -> None:
         mock1 = MagicMock()
         mock2 = MagicMock()
         mock3 = MagicMock()
@@ -99,7 +99,7 @@ class TestMultiConnection(unittest.TestCase):
     def setUp(self) -> None:
         self.connection = TestMultiConnection.MultiConMock()
 
-    def test_add(self):
+    def test_add(self) -> None:
         devices = [MagicMock() for _ in range(5)]
 
         for dev in devices:
@@ -107,19 +107,19 @@ class TestMultiConnection(unittest.TestCase):
 
         self.assertListEqual(self.connection._registry, devices)
 
-    def test_error_on_pbi_index(self):
+    def test_error_on_pbi_index(self) -> None:
         dev = MagicMock()
 
         with self.assertRaises(Exception):
             self.connection._register(dev, pbi_index=1)
 
-    def test_get_core_num_single(self):
+    def test_get_core_num_single(self) -> None:
         mock1 = MagicMock()
         self.connection._register(mock1)
         core_num1 = self.connection._get_core_num(mock1)
         self.assertEqual(core_num1, 0)
 
-    def test_get_core_num_multiple(self):
+    def test_get_core_num_multiple(self) -> None:
         devices = [MagicMock() for _ in range(3)]
 
         for dev in devices:
@@ -138,7 +138,7 @@ class TestSingleConnection(unittest.TestCase):
     def setUp(self) -> None:
         self.connection = TestSingleConnection.SingleConMock()
 
-    def test_add_single(self):
+    def test_add_single(self) -> None:
         mock1 = MagicMock()
         mock2 = MagicMock()
 
@@ -148,7 +148,7 @@ class TestSingleConnection(unittest.TestCase):
         with self.assertRaises(Exception):
             self.connection._register(mock2)
 
-    def test_error_on_pbi_index(self):
+    def test_error_on_pbi_index(self) -> None:
         dev = MagicMock()
 
         with self.assertRaises(Exception):

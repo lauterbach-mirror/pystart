@@ -6,7 +6,7 @@ import lauterbach.trace32.pystart as pystart
 
 
 class TestCreateConnection(unittest.TestCase):
-    def testConnectionWithPathParameter(self):
+    def testConnectionWithPathParameter(self) -> None:
         connections = [pystart.MCDConnection, pystart.CADIConnection, pystart.IRISConnection, pystart.GDIConnection]
         for con in connections:
             with self.subTest(cls=con.__name__, type="str"):
@@ -18,13 +18,13 @@ class TestCreateConnection(unittest.TestCase):
 
 
 class TestConnection(unittest.TestCase):
-    def test_ViewerConnection(self):
+    def test_ViewerConnection(self) -> None:
         x = pystart.ViewerConnection()
 
         self.assertTrue(isinstance(x, pystart._connection._SingleConnection))
         self.assertRegex(x._get_config_string(None), re.compile("^PBI=VIEWER$", flags=re.MULTILINE))
 
-    def test_InteractiveConnection(self):
+    def test_InteractiveConnection(self) -> None:
         x = pystart.InteractiveConnection()
 
         self.assertTrue(isinstance(x, pystart._connection._SingleConnection))

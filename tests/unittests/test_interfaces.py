@@ -38,12 +38,12 @@ INTERFACES: Dict[T32Interface, Dict[str, Any]] = {
 
 
 class TestAddInterface(unittest.TestCase):
-    def test_addWrongType(self):
+    def test_addWrongType(self) -> None:
         pv = PowerView(SimulatorConnection(), "t32marm")
         with self.assertRaises(ValueError):
             pv.add_interface(int())
 
-    def test_addInterfaces(self):
+    def test_addInterfaces(self) -> None:
         for interface, settings in INTERFACES.items():
             args = settings["DEFAULTARGS"]
             max_instances = interface._get_max_instances()
@@ -62,7 +62,7 @@ class TestAddInterface(unittest.TestCase):
                     with self.assertRaises(ValueError):
                         pv.add_interface(interface(*args))
 
-    def test_addInterface_results_in_entry(self):
+    def test_addInterface_results_in_entry(self) -> None:
         for interface, settings in INTERFACES.items():
             key = settings["CONFIGKEY"]
             args = settings["DEFAULTARGS"]
@@ -79,14 +79,14 @@ class TestAddInterface(unittest.TestCase):
                     key2 = s2["CONFIGKEY"]
                     self.assertNotRegex(x, re.compile(f"^{key2}"))
 
-    def test_noAddedInterfaces(self):
+    def test_noAddedInterfaces(self) -> None:
         pv = PowerView(SimulatorConnection(), "t32marm")
         x = pv.get_configuration_string()
         for key in (tmp["CONFIGKEY"] for tmp in INTERFACES.values()):
             with self.subTest(key=key):
                 self.assertNotIn(key, x)
 
-    def test_addDifferentInterfaces(self):
+    def test_addDifferentInterfaces(self) -> None:
         pv = PowerView(SimulatorConnection(), "t32marm")
         for interface, settings in INTERFACES.items():
             args = settings["DEFAULTARGS"]
@@ -98,7 +98,7 @@ class TestAddInterface(unittest.TestCase):
             key = settings["CONFIGKEY"]
             self.assertRegex(x, re.compile(f"^{key}", flags=re.MULTILINE))
 
-    def test_RCLInterface(self):
+    def test_RCLInterface(self) -> None:
         with self.subTest(protocol="TCP"):
             x = RCLInterface(port=42, protocol="TCP")._get_config_string()
             self.assertRegex(x, re.compile("^RCL=NETTCP$", flags=re.MULTILINE))
@@ -112,19 +112,19 @@ class TestAddInterface(unittest.TestCase):
             self.assertRegex(x, re.compile("^PORT=43$", flags=re.MULTILINE))
             self.assertRegex(x, re.compile("^PACKLEN=9999$", flags=re.MULTILINE))
 
-    def test_TCFInterface(self):
+    def test_TCFInterface(self) -> None:
         x = TCFInterface(port=9876)._get_config_string()
         self.assertRegex(x, re.compile("^TCF=$", flags=re.MULTILINE))
         self.assertRegex(x, re.compile("^PORT=9876$", flags=re.MULTILINE))
 
-    def test_IntercomInterface(self):
+    def test_IntercomInterface(self) -> None:
         x = IntercomInterface(name="ABCDE", port=1234, packlen=9876)._get_config_string()
         self.assertRegex(x, re.compile("^IC=NETASSIST$", flags=re.MULTILINE))
         self.assertRegex(x, re.compile("^PORT=1234$", flags=re.MULTILINE))
         self.assertRegex(x, re.compile("^PACKLEN=9876$", flags=re.MULTILINE))
         self.assertRegex(x, re.compile("^NAME=ABCDE$", flags=re.MULTILINE))
 
-    def test_GDBInterface(self):
+    def test_GDBInterface(self) -> None:
         with self.subTest(protocol="TCP"):
             x = GDBInterface(port=1233, protocol="TCP", packlen=9876)._get_config_string()
             self.assertRegex(x, re.compile("^GDB=NETASSIST$", flags=re.MULTILINE))
@@ -138,7 +138,7 @@ class TestAddInterface(unittest.TestCase):
             self.assertRegex(x, re.compile("^PORT=1234$", flags=re.MULTILINE))
             self.assertRegex(x, re.compile("^PACKLEN=9876$", flags=re.MULTILINE))
 
-    def test_SimulinkInterface(self):
+    def test_SimulinkInterface(self) -> None:
         x = SimulinkInterface(1234)._get_config_string()
         self.assertRegex(x, re.compile("^SIMULINK=NETASSIST$", flags=re.MULTILINE))
         self.assertRegex(x, re.compile("^PORT=1234$", flags=re.MULTILINE))
@@ -149,7 +149,7 @@ class TestInterface_AllowRemoteHost(unittest.TestCase):
     REMOTEHOSTALLOW = re.compile("^REMOTEHOSTALLOW$", flags=re.MULTILINE)
     REMOTEHOSTDENY = re.compile("^REMOTEHOSTDENY$", flags=re.MULTILINE)
 
-    def test_remotehostallow(self):
+    def test_remotehostallow(self) -> None:
         kwargs = {"allow_remote_host": True}
         for interface in self.INTERFACES_OF_INTEREST:
             args = INTERFACES[interface]["DEFAULTARGS"]
@@ -158,7 +158,7 @@ class TestInterface_AllowRemoteHost(unittest.TestCase):
                 self.assertRegex(config_string, self.REMOTEHOSTALLOW)
                 self.assertNotRegex(config_string, self.REMOTEHOSTDENY)
 
-    def test_remotehostdeny(self):
+    def test_remotehostdeny(self) -> None:
         kwargs = {"allow_remote_host": False}
         for interface in self.INTERFACES_OF_INTEREST:
             args = INTERFACES[interface]["DEFAULTARGS"]
@@ -167,7 +167,7 @@ class TestInterface_AllowRemoteHost(unittest.TestCase):
                 self.assertNotRegex(config_string, self.REMOTEHOSTALLOW)
                 self.assertRegex(config_string, self.REMOTEHOSTDENY)
 
-    def test_remotehostnone(self):
+    def test_remotehostnone(self) -> None:
         kwargs = {"allow_remote_host": None}
         for interface in self.INTERFACES_OF_INTEREST:
             args = INTERFACES[interface]["DEFAULTARGS"]

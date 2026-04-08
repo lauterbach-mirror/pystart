@@ -9,7 +9,7 @@ import lauterbach.trace32.rcl as pyrcl
 import lauterbach.trace32.pystart as pystart
 
 
-def setUpModule():
+def setUpModule() -> None:
     dotenv.load_dotenv()
 
 
@@ -18,19 +18,19 @@ class TestRunTrace32(unittest.TestCase):
         self.first_rcl_port = 20000
         self.target = os.getenv("T32TARGET", "t32marm")
 
-    def test_many_simulators(self):
+    def test_many_simulators(self) -> None:
         N = 20
         instances = [pystart.PowerView(pystart.SimulatorConnection(), self.target) for _ in range(N)]
         self.open_close_instances(instances)
 
-    def test_many_simulators_different_id(self):
+    def test_many_simulators_different_id(self) -> None:
         N = 20
         instances = [pystart.PowerView(pystart.SimulatorConnection(), self.target) for _ in range(N)]
         for i, pv in enumerate(instances):
             pv.id = f"inst{i:02}"
         self.open_close_instances(instances)
 
-    def test_usb_amp_setup(self):
+    def test_usb_amp_setup(self) -> None:
         N = 4
         con = pystart.USBConnection()
         instances = [pystart.PowerView(con, self.target) for _ in range(N)]
