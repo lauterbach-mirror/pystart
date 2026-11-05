@@ -362,6 +362,7 @@ class PowerView:
                 system_path = "/opt/t32"
             else:
                 raise ValueError("no system_path specified")
+            logger.warning("No system_path specified, falling back to: %s", system_path)
 
         sys_specific = _BIN_SUBFOLDER[system]
         extension = ""
