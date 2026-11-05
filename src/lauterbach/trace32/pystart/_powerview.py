@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import collections
 import enum
 import itertools
 import logging
@@ -12,7 +13,7 @@ import tempfile
 import threading
 from abc import ABC, abstractmethod
 from types import TracebackType
-from typing import Any, Dict, List, Optional, TextIO, Union
+from typing import Any, DefaultDict, List, Optional, TextIO, Union
 
 PathType = Union[str, pathlib.Path]
 logger = logging.getLogger("lauterbach.trace32.pystart")
@@ -56,7 +57,7 @@ class PowerView:
         if self._connection is not None:
             self._connection._register(self, pbi_index)
         self._process: Optional[subprocess.Popen[str]] = None
-        self.interfaces: Dict[Any, List[T32Interface]] = dict()
+        self.interfaces: DefaultDict[Any, List[T32Interface]] = collections.defaultdict(list)
         self._config_file_name: str = ""
         self._thread_stdout: Optional[threading.Thread] = None
         self._thread_stderr: Optional[threading.Thread] = None
@@ -389,11 +390,7 @@ class PowerView:
             raise ValueError("parameter is not of type _T32Interface")
 
         interface_type = type(interface)
-
-        interfaces_same_type = self.interfaces.get(interface_type)
-        if interfaces_same_type is None:
-            interfaces_same_type = []
-            self.interfaces[interface_type] = interfaces_same_type
+        interfaces_same_type = self.interfaces[interface_type]
 
         limit = interface_type._get_max_instances()
         if limit is not None and limit <= len(interfaces_same_type):
