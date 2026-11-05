@@ -450,8 +450,8 @@ class PowerView:
     def _get_config_string_license(self) -> str:
         args = ["LICENSE="]
 
-        rlm_pool_port = self.rlm_pool_port or defaults.rlm_pool_port
-        if rlm_pool_port:
+        rlm_pool_port = self.rlm_pool_port if self.rlm_pool_port is not None else defaults.rlm_pool_port
+        if rlm_pool_port is not None:
             args.append(f"POOLPORT={rlm_pool_port}")
 
         if self.rlm_file:
@@ -463,7 +463,7 @@ class PowerView:
         elif defaults.rlm_server:
             args.append(f"RLM_LICENSE={defaults.rlm_port}@{defaults.rlm_server}")
 
-        rlm_timeout = self.rlm_timeout or defaults.rlm_timeout
+        rlm_timeout = self.rlm_timeout if self.rlm_timeout is not None else defaults.rlm_timeout
         if rlm_timeout:
             args.append(f"TIMEOUT={self.rlm_timeout}")
 
