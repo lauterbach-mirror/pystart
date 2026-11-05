@@ -614,13 +614,7 @@ class FontSize(enum.Enum):
         return f"{type(self).__qualname__}.{self.name}"
 
 
-class Palette(enum.Enum):
-    """Enumeration of basic color schemes."""
-
-    DEFAULT = "DEFAULT"
-    KEEP = "KEEP"
-    """Keep last used palette"""
-    DARK_THEME = """PALETTE 0 = 181 181 181
+DARK_THEME = """PALETTE 0 = 181 181 181
 PALETTE 1 = 41 49 52
 PALETTE 2 = 63 75 78
 PALETTE 5 = 255 111 111
@@ -644,6 +638,15 @@ PALETTE 36 = 232 172 99
 PALETTE 37 = 147 199 99
 PALETTE 47 = 47 57 60
 PALETTE 54 = 255 255 255"""
+
+
+class Palette(enum.Enum):
+    """Enumeration of basic color schemes."""
+
+    DEFAULT = "DEFAULT"
+    KEEP = "KEEP"
+    """Keep last used palette"""
+    DARK_THEME = DARK_THEME
 
     def __repr__(self) -> str:
         return f"{type(self).__qualname__}.{self.name}"
