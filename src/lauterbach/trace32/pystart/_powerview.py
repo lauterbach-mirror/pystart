@@ -148,7 +148,10 @@ class PowerView:
 
     def __del__(self) -> None:
         if self._config_file_name:
-            os.remove(self._config_file_name)
+            try:
+                os.remove(self._config_file_name)
+            except OSError:
+                logger.warning("Failed to remove config file: %s", self._config_file_name, exc_info=True)
 
     def __enter__(self) -> PowerView:
         return self
