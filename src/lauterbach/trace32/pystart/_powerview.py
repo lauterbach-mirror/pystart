@@ -159,8 +159,8 @@ class PowerView:
         self.stop()
 
     def _create_config_file(self) -> str:
-        dir = self.temp_path or defaults.temp_path or os.environ.get("T32TMP")
-        with tempfile.NamedTemporaryFile("w+", delete=False, dir=dir) as config_file:
+        config_dir = self.temp_path or defaults.temp_path or os.environ.get("T32TMP")
+        with tempfile.NamedTemporaryFile("w+", delete=False, dir=config_dir) as config_file:
             filename = config_file.name
             config_file.write(self.get_configuration_string())
         logger.debug(f"temporary config file created: {filename}")
