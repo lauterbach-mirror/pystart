@@ -1,5 +1,8 @@
 ## Change Log
 
+### upcoming
+* return Trace32's returncode
+
 ### v0.6.0
 * add parameter setting for `connection_script`.
 * Make `Connection` optional for `connection_script` not being ignored.

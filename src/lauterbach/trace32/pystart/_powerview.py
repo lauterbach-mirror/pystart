@@ -245,21 +245,26 @@ class PowerView:
         logger.info("PowerView instance started")
         return self
 
-    def wait(self, timeout: Optional[float] = None) -> None:
+    def wait(self, timeout: Optional[float] = None) -> Optional[int]:
         """wait for process to terminate
 
         Args:
             timeout: optional timeout in seconds.
 
+        Returns:
+            Trace32's process returncode or `None` in case there was no process started
+
         Raises:
             TimeoutError: on timeout
         """
+        returncode = None
         if self._process:
             try:
-                self._process.wait(timeout)
+                returncode = self._process.wait(timeout)
             except subprocess.TimeoutExpired as exc:
                 raise TimeoutError from exc
         self._event_started.clear()
+        return returncode
 
     def stop(self, timeout: Optional[float] = None) -> None:
         """stops the process gently
