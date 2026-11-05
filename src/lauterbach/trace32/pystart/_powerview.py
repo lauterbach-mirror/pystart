@@ -12,7 +12,7 @@ import tempfile
 import threading
 from abc import ABC, abstractmethod
 from types import TracebackType
-from typing import Any, Dict, Iterable, List, Optional, TextIO, Union
+from typing import Any, Dict, List, Optional, TextIO, Union
 
 PathType = Union[str, pathlib.Path]
 logger = logging.getLogger("lauterbach.trace32.pystart")
@@ -132,18 +132,18 @@ class PowerView:
         # startup script
         self.startup_script: "PathType" = ""
         """A cmm script being executed on start of TRACE32."""
-        self.startup_parameter: Iterable[str] = []
+        self.startup_parameter: list[str] = []
         """Parameter for ``startup_script``. If you want to retrieve the parameters by ``PARAMETERS`` command, consider
         adding additional quotes at beginning and ending of each string."""
         self.connection_script: "PathType" = ""
         """A cmm script being executded immediately after PowerView started."""
-        self.connection_parameter: Iterable[str] = []
+        self.connection_parameter: list[str] = []
         """Parameter for ``connection_script``.
         Elements must not start with a hyphen and must not contain any commas."""
         self.safe_start: bool = False
         """Suppresses the automatic execution of any PRACTICE script after starting TRACE32. This allows you to test or
         debug the scripts that are normally executed automatically."""
-        self.args: Iterable[str] = []
+        self.args: list[str] = []
         """Additional command line options for starting TRACE32."""
 
     def __del__(self) -> None:
