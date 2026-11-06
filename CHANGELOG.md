@@ -34,7 +34,7 @@
 * gently stop Trace32 on Windows OS
 * added timeout for `PowerView.stop()`
 * wait necessary time in `PowerView.start()` instead of waiting for a predefined amount of time
-* added exeptions `TimeoutExpiredError` and `AlreadyRunningError`
+* added exceptions `TimeoutExpiredError` and `AlreadyRunningError`
 * limit startup script parameter to be of type `Iterable[str]`
 * send `stdout` and `stderr` output of PowerView instance to a logger
 

@@ -90,7 +90,7 @@ class TestRunWithStartupScript(unittest.TestCase):
         self._check_macros(expected)
 
     def _check_macros(self, expected: typing.Dict[str, typing.Dict[str, str]]) -> None:
-        """Check if practice macros match the expacted value
+        """Check if practice macros match the expected value
 
         Args:
             expected (typing.Dict[str, typing.Dict[str, str]]): expected values in the format:

@@ -9,7 +9,7 @@ from lauterbach.trace32.pystart import PowerView, USBConnection, defaults
 # Variant 2: via library global variable:
 defaults.system_path = r"C:\Some\other\path"
 
-# Varaint 3: Specify system_path via constructor
+# Variant 3: Specify system_path via constructor
 powerview1 = PowerView(USBConnection(), "t32mxtensa", system_path=r"C:\T32")
 
 print("powerview1:")

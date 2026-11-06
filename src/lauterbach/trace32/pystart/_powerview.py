@@ -137,7 +137,7 @@ class PowerView:
         """Parameter for ``startup_script``. If you want to retrieve the parameters by ``PARAMETERS`` command, consider
         adding additional quotes at beginning and ending of each string."""
         self.connection_script: "PathType" = ""
-        """A cmm script being executded immediately after PowerView started."""
+        """A cmm script being executed immediately after PowerView started."""
         self.connection_parameter: list[str] = []
         """Parameter for ``connection_script``.
         Elements must not start with a hyphen and must not contain any commas."""
@@ -273,7 +273,7 @@ class PowerView:
     def stop(self, timeout: Optional[float] = None) -> None:
         """stops the process gently
 
-        This function blocks until the process is stoppped.
+        This function blocks until the process is stopped.
         When TRACE32 build number is below 165929, you are on Windows and screen is disabled, TRACE32 does not get
         stopped.
 
@@ -554,7 +554,7 @@ def _event_on_terminate(process: subprocess.Popen[str], event_started: threading
         process.wait(timeout + 1)
     except subprocess.TimeoutExpired:
         return
-    logger.debug("Process terminated formerly")
+    logger.debug("Process terminated prematurely")
     event_started.set()
 
 

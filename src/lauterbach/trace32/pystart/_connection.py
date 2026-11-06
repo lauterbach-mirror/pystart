@@ -196,7 +196,7 @@ class UDPConnection(_PBIConnection):
     compression: bool = False
     """If ``True`` reduces the packet size by compression."""
     delay: int = 0
-    """Delay UDP packets send from host by specifed time in milliseconds."""
+    """Delay UDP packets send from host by specified time in milliseconds."""
     connect_mode: ConnectMode = ConnectMode.NORMAL
     """Specify reaction if debugger is already in use."""
     exclusive: bool = False
