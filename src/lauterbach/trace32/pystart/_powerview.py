@@ -61,7 +61,6 @@ class PowerView:
         self._config_file_name: str = ""
         self._thread_stdout: Optional[threading.Thread] = None
         self._thread_stderr: Optional[threading.Thread] = None
-        self._event_started = threading.Event()
 
         # paths
         self.system_path: "PathType" = system_path
@@ -214,11 +213,11 @@ class PowerView:
         if delay is not None:
             timeout = delay
 
+        event_started = threading.Event()
+
         if platform.system() == "Windows" and not self._screen_off and delay is None:
             logger.debug("create Windows event for waiting until PowerView has started")
-            t = threading.Thread(
-                target=_wait_started_windows_signal, args=(self._event_started, timeout + 1), daemon=True
-            )
+            t = threading.Thread(target=_wait_started_windows_signal, args=(event_started, timeout + 1), daemon=True)
             t.start()
 
         cmd = self._get_popen_args()
@@ -230,19 +229,17 @@ class PowerView:
         assert self._process.stdout is not None
         assert self._process.stderr is not None
         self._thread_stdout = threading.Thread(
-            target=_handle_console_out, args=(self._process.stdout, logger_stdout, self._event_started), daemon=True
+            target=_handle_console_out, args=(self._process.stdout, logger_stdout, event_started), daemon=True
         )
         self._thread_stderr = threading.Thread(
-            target=_handle_console_out, args=(self._process.stderr, logger_stderr, self._event_started), daemon=True
+            target=_handle_console_out, args=(self._process.stderr, logger_stderr, event_started), daemon=True
         )
         self._thread_stdout.start()
         self._thread_stderr.start()
-        threading.Thread(
-            target=_event_on_terminate, args=(self._process, self._event_started, timeout), daemon=True
-        ).start()
+        threading.Thread(target=_event_on_terminate, args=(self._process, event_started, timeout), daemon=True).start()
 
         logger.info("waiting for start of PowerView instance")
-        if not self._event_started.wait(timeout) and delay is None:
+        if not event_started.wait(timeout) and delay is None:
             raise TimeoutError("Timeout expired on waiting for complete start of PowerView")
         if self._process.poll() is not None:
             raise ChildProcessError("PowerView instance terminated prematurely")
@@ -267,7 +264,6 @@ class PowerView:
                 returncode = self._process.wait(timeout)
             except subprocess.TimeoutExpired as exc:
                 raise TimeoutError from exc
-        self._event_started.clear()
         return returncode
 
     def stop(self, timeout: Optional[float] = None) -> None:
