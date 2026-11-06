@@ -463,9 +463,9 @@ class PowerView:
 
         rlm_timeout = self.rlm_timeout if self.rlm_timeout is not None else defaults.rlm_timeout
         if rlm_timeout:
-            args.append(f"TIMEOUT={self.rlm_timeout}")
+            args.append(f"TIMEOUT={rlm_timeout}")
 
-        if len(args) - bool(self.rlm_timeout) > 1:
+        if len(args) - bool(rlm_timeout) > 1:
             return "\n".join(args)
         else:
             return ""
