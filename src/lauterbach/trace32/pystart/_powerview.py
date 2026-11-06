@@ -292,6 +292,7 @@ class PowerView:
                 try:
                     logger.debug('send "QUIT" to PowerView instance via stdin')
                     self._process.stdin.write("quit\n")
+                    self._process.stdin.flush()
                 except subprocess.TimeoutExpired as exc:
                     raise TimeoutError from exc
             else:
