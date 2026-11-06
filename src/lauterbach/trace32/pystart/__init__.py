@@ -63,11 +63,8 @@ __all__ = [
     "ViewerConnection",
     "TCPConnection",
     "InteractiveConnection",
-    # _settings
-    "T32License",
-    "T32Screen",
-    "TCFInterface",
     # _settings.interfaces
+    "TCFInterface",
     "GDBInterface",
     "IntercomInterface",
     "RCLInterface",
