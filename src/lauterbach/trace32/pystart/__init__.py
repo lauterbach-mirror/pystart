@@ -63,13 +63,13 @@ __all__ = [
     "ViewerConnection",
     "TCPConnection",
     "InteractiveConnection",
-    # _settings.interfaces
+    # _interface
     "TCFInterface",
     "GDBInterface",
     "IntercomInterface",
     "RCLInterface",
     "SimulinkInterface",
-    # _settings.screen
+    # _powerview
     "FontSize",
     "Palette",
     "WindowMode",
