@@ -166,7 +166,7 @@ class PowerView:
         return filename
 
     def _remove_config_file(self) -> None:
-        if self._config_file_name:
+        if getattr(self, "_config_file_name", ""):
             try:
                 os.remove(self._config_file_name)
             except OSError:
