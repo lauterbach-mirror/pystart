@@ -293,8 +293,8 @@ class PowerView:
                     logger.debug('send "QUIT" to PowerView instance via stdin')
                     self._process.stdin.write("quit\n")
                     self._process.stdin.flush()
-                except subprocess.TimeoutExpired as exc:
-                    raise TimeoutError from exc
+                except BrokenPipeError:
+                    logger.debug("PowerView instance closed stdin, assuming it already terminated")
             else:
                 import ctypes
 
