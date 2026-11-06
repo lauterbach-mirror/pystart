@@ -370,7 +370,12 @@ class PowerView:
 
         if system == "Windows":
             extension = ".exe"
-            if not self.force_32bit_executable:
+            force_32bit_executable = (
+                self.force_32bit_executable
+                if self.force_32bit_executable is not None
+                else defaults.force_32bit_executable
+            )
+            if not force_32bit_executable:
                 sys_specific += "64"
         return pathlib.Path(system_path, "bin", sys_specific, f"{self.target}{extension}")
 
