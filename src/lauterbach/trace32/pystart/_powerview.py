@@ -147,11 +147,7 @@ class PowerView:
         """Additional command line options for starting TRACE32."""
 
     def __del__(self) -> None:
-        if self._config_file_name:
-            try:
-                os.remove(self._config_file_name)
-            except OSError:
-                logger.warning("Failed to remove config file: %s", self._config_file_name, exc_info=True)
+        self._remove_config_file()
 
     def __enter__(self) -> PowerView:
         return self
@@ -169,6 +165,13 @@ class PowerView:
         logger.debug(f"temporary config file created: {filename}")
         return filename
 
+    def _remove_config_file(self) -> None:
+        if self._config_file_name:
+            try:
+                os.remove(self._config_file_name)
+            except OSError:
+                logger.warning("Failed to remove config file: %s", self._config_file_name, exc_info=True)
+
     def _get_popen_args(self) -> List[str]:
         cmd = [str(self.executable), "--t32-bootstatus"]
         if self.startup_script and self.safe_start:
@@ -178,6 +181,7 @@ class PowerView:
             cmd.extend(["-e", str(self.connection_script)])
             if self.connection_parameter:
                 cmd.extend(self.connection_parameter)
+        self._remove_config_file()
         self._config_file_name = self._create_config_file()
         cmd.extend(["-c", self._config_file_name])
         if self.startup_script:
