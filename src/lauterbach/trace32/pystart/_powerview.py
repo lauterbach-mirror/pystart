@@ -557,12 +557,15 @@ def _wait_started_windows_signal(event_started: threading.Event, timeout: float)
     ctypes.windll.kernel32.CreateEventW.restype = ctypes.c_void_p
     ctypes.windll.kernel32.WaitForSingleObject.argtypes = [ctypes.c_void_p, ctypes.c_uint32]
     ctypes.windll.kernel32.WaitForSingleObject.restype = ctypes.c_uint32
+    ctypes.windll.kernel32.CloseHandle.argtypes = [ctypes.c_void_p]
+    ctypes.windll.kernel32.CloseHandle.restype = ctypes.c_int
     WAIT_TIMEOUT = 0x00000102
     WAIT_FAILED = 0xFFFFFFFF
 
     event = ctypes.windll.kernel32.CreateEventW(0, 0, 0, "T32_STARTUP_COMPLETED")
     assert event, "no eventhandler was created"
     rc = ctypes.windll.kernel32.WaitForSingleObject(event, int(timeout * 1000))
+    ctypes.windll.kernel32.CloseHandle(event)
     if rc == WAIT_TIMEOUT:
         if event_started.is_set():
             logger.debug("ignoring Windows event timeout because of formerly event_started")
