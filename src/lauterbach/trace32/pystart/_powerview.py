@@ -38,7 +38,11 @@ class PowerView:
         target: Name of the executable without file extension e.g. 't32marm'
         system_path: Directory where the executable and system files of TRACE32 are located.
         force_executable: Overrides ``system_path`` and ``target`` settings when deriving the executable.
-        pbi_index: In case of using a PBIConnection, the 0 based index in the pbi-chain else must be 0.
+        pbi_index: 0-based position of this instance in the PodBus chain if the connection is a PBIConnection. A
+            PodBus chain consists of several Lauterbach hardware modules (e.g. debug and trace modules) connected in a
+            daisy chain via the PodBus interface and accessed through one connection (e.g. a single USB port).
+            Multiple PowerView instances can share such a connection, each using its own position. This determines
+            the ``USE`` option in the generated config file. Must be 0 for other connection types.
     """
 
     def __init__(
@@ -618,7 +622,7 @@ class Connection(ABC):
 
         Args:
             power_view: PowerView-Instance
-            pbi_index: in case of a PBIConnection, the 0 based index in the pbi-chain else ignored
+            pbi_index: 0-based position of the instance in the PodBus chain if this is a PBIConnection, else must be 0
         """
         pass
 
