@@ -132,18 +132,18 @@ class PowerView:
         # startup script
         self.startup_script: "PathType" = ""
         """A cmm script being executed on start of TRACE32."""
-        self.startup_parameter: list[str] = []
+        self.startup_parameter: List[str] = []
         """Parameter for ``startup_script``. If you want to retrieve the parameters by ``PARAMETERS`` command, consider
         adding additional quotes at beginning and ending of each string."""
         self.connection_script: "PathType" = ""
         """A cmm script being executed immediately after PowerView started."""
-        self.connection_parameter: list[str] = []
+        self.connection_parameter: List[str] = []
         """Parameter for ``connection_script``.
         Elements must not start with a hyphen and must not contain any commas."""
         self.safe_start: bool = False
         """Suppresses the automatic execution of any PRACTICE script after starting TRACE32. This allows you to test or
         debug the scripts that are normally executed automatically."""
-        self.args: list[str] = []
+        self.args: List[str] = []
         """Additional command line options for starting TRACE32."""
 
     def __del__(self) -> None:
@@ -229,7 +229,7 @@ class PowerView:
 
         logger.info("starting PowerView instance")
         self._process = subprocess.Popen(
-            cmd, env=os.environ, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+            cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
         )
 
         assert self._process.stdout is not None
@@ -554,6 +554,7 @@ class PowerView:
 def _wait_started_windows_signal(event_started: threading.Event, timeout: float) -> None:
     import ctypes
 
+    ctypes.windll.kernel32.CreateEventW.argtypes = [ctypes.c_void_p, ctypes.c_int, ctypes.c_int, ctypes.c_wchar_p]
     ctypes.windll.kernel32.CreateEventW.restype = ctypes.c_void_p
     ctypes.windll.kernel32.WaitForSingleObject.argtypes = [ctypes.c_void_p, ctypes.c_uint32]
     ctypes.windll.kernel32.WaitForSingleObject.restype = ctypes.c_uint32
