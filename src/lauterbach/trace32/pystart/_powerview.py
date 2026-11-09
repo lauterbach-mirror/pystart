@@ -204,6 +204,7 @@ class PowerView:
 
         Raises:
             FileNotFoundError: if the executable can not be found within the specified path
+            ValueError: if no ``target`` or ``force_executable`` is set
             TimeoutError: after waiting for the time specified by `timeout`
             RuntimeError: if process is already running
             ChildProcessError: if process terminated prematurely
@@ -211,7 +212,7 @@ class PowerView:
         if self._process and self._process.poll() is None:
             raise RuntimeError("process is already running")
 
-        if not self.executable.exists() and not self.executable.is_file():
+        if not self.executable.is_file():
             raise FileNotFoundError(f"Executable {self.executable} not found")
 
         if delay is not None:
