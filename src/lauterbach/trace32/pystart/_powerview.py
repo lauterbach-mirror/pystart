@@ -219,12 +219,13 @@ class PowerView:
 
         event_started = threading.Event()
 
+        cmd = self._get_popen_args()
+
         if platform.system() == "Windows" and not self._screen_off and delay is None:
             logger.debug("create Windows event for waiting until PowerView has started")
             t = threading.Thread(target=_wait_started_windows_signal, args=(event_started, timeout + 1), daemon=True)
             t.start()
 
-        cmd = self._get_popen_args()
         logger.info("starting PowerView instance")
         self._process = subprocess.Popen(
             cmd, env=os.environ, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
