@@ -357,10 +357,10 @@ class USBProxyConnection(_PBIConnection):
 
 @dataclass
 class MCIServerConnection(_MultiConnection):
-    """start a TRACE32 as a back-end using an MCI server (t32mciserver)."""
+    """Start TRACE32 as a back-end using an MCI server (t32mciserver)."""
 
     node_name: str = "localhost"
-    """The key value specifies the node name of the PowerDebug device to connect to. This should be either a DNS
+    """The key value specifies the node name of the MCI server to connect to. This should be either a DNS
     name or an IP address."""
     port: int = 30000
     """TCP-port number of MCI-Server. All started PowerView GUIs that belong to one target system must use the same PORT
@@ -389,6 +389,8 @@ class MCIServerConnection(_MultiConnection):
 
 @dataclass
 class SimulatorConnection(_SingleConnection):
+    """Connection to the TRACE32 Instruction Set Simulator (ISS)."""
+
     license_connection: Optional[_PBIConnection] = None
     """Specifies a hardware-based TRACE32 debugger connection to use its license
 
@@ -471,8 +473,12 @@ class MCILibConnection(_SingleConnection):
 
 @dataclass
 class SerialRomMonitorConnection(_SingleConnection):
+    """TRACE32 to debug via a serial ROM monitor."""
+
     port: str = "COM1"
+    """Serial port to use."""
     baudrate: int = 57600
+    """Baud rate of the serial connection."""
 
     def __post_init__(self) -> None:
         super().__init__()

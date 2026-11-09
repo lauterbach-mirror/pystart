@@ -8,10 +8,9 @@ from ._powerview import T32Interface
 class RCLInterface(T32Interface):
     """TRACE32 Remote API for TCP/IP and UDP.
 
-    It defines the parameters for the TRACE32 Remote API for TCP/IP and UDP. Even if the
-    configuration is performed for both protocols, it is recommended to use TCP/IP. Please refer to “API for Remote
-    Control and JTAG Access in C” (api_remote_c.pdf) for more information and “Controlling TRACE32 via Python 3”
-    (app_python.pdf). Multiple instances are allowed.
+    Even if the configuration is performed for both protocols, it is recommended to use TCP/IP. Please refer to
+    “API for Remote Control and JTAG Access in C” (api_remote_c.pdf) for more information and
+    “Controlling TRACE32 via Python 3” (app_python.pdf). Multiple instances are allowed.
     """
 
     _RCL_PROTOCOLS = {
@@ -20,7 +19,7 @@ class RCLInterface(T32Interface):
     }
 
     port: int = 20000
-    """ Lets the TRACE32 instance listen to the UDP/TCP port."""
+    """Lets the TRACE32 instance listen to the UDP/TCP port."""
     packlen: int = 1024
     """Specifies the maximum data package length for UDP. No operation for TCP."""
     protocol: str = "TCP"
@@ -55,7 +54,7 @@ class RCLInterface(T32Interface):
 
 @dataclass
 class IntercomInterface(T32Interface):
-    """Over this interface the PowerView instance can be controlled via an other PowerView instance.
+    """Over this interface the PowerView instance can be controlled via another PowerView instance.
 
     It defines the parameter for the communication between multiple TRACE32 PowerView
     instances. Only one instance is allowed.

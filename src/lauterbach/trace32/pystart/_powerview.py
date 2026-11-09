@@ -195,7 +195,7 @@ class PowerView:
         return cmd
 
     def start(self, *, timeout: float = 20.0, delay: Optional[float] = None) -> PowerView:
-        """generates a config file, starts TRACE32 and blocks until TRACE32 has fully started
+        """Generates a config file, starts TRACE32 and blocks until TRACE32 has fully started
 
         Args:
             timeout: timeout for complete start of TRACE32 in seconds. (default=20.0)
@@ -257,7 +257,7 @@ class PowerView:
         return self
 
     def wait(self, timeout: Optional[float] = None) -> Optional[int]:
-        """wait for process to terminate
+        """Wait for process to terminate
 
         Args:
             timeout: optional timeout in seconds.
@@ -408,7 +408,7 @@ class PowerView:
         return pathlib.Path(system_path, "bin", sys_specific, f"{self.target}{extension}")
 
     def add_interface(self, interface: "T32Interface") -> "T32Interface":
-        """Add a interface for inter-process communication
+        """Add an interface for inter-process communication
 
         Args:
             interface: interface to add
@@ -613,7 +613,7 @@ class Connection(ABC):
 
     @abstractmethod
     def _get_config_string(self, power_view: "PowerView") -> str:
-        """return the Connection-Specific part of a TRACE32 config file"""
+        """Return the connection-specific part of a TRACE32 config file"""
         raise NotImplementedError()
 
     @abstractmethod
@@ -640,7 +640,7 @@ class T32Interface(ABC):
     @classmethod
     @abstractmethod
     def _get_max_instances(cls) -> Optional[int]:
-        pass
+        """Return the maximum number of instances of this interface per PowerView instance, or ``None`` if unlimited."""
 
 
 ####################
