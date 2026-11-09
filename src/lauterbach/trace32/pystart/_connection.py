@@ -566,9 +566,9 @@ class GDIConnection(_SingleConnection):
     Refer to “Virtual Targets User’s Guide” (virtual_targets.pdf) for more information."""
 
     library_file: "PathType" = ""
-    """Required library file.
+    """Optional library file.
 
-    Please contact the manufacturer of the virtual target for the required .dll file."""
+    Please contact the manufacturer of the virtual target for the .dll file."""
 
     def __post_init__(self) -> None:
         super().__init__()

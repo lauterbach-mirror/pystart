@@ -416,7 +416,7 @@ class PowerView:
             ValueError: raised if an interface which can be added only once is already added
         """
         if not isinstance(interface, T32Interface):
-            raise ValueError("parameter is not of type _T32Interface")
+            raise ValueError("parameter is not of type T32Interface")
 
         interface_type = type(interface)
         interfaces_same_type = self.interfaces[interface_type]
