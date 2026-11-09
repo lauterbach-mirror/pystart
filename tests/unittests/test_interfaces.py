@@ -112,6 +112,10 @@ class TestAddInterface(unittest.TestCase):
             self.assertRegex(x, re.compile("^PORT=43$", flags=re.MULTILINE))
             self.assertRegex(x, re.compile("^PACKLEN=9999$", flags=re.MULTILINE))
 
+        with self.subTest(protocol="INVALID"):
+            with self.assertRaises(ValueError):
+                RCLInterface(port=44, protocol="INVALID")._get_config_string()
+
     def test_TCFInterface(self) -> None:
         x = TCFInterface(port=9876)._get_config_string()
         self.assertRegex(x, re.compile("^TCF=$", flags=re.MULTILINE))

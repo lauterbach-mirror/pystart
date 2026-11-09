@@ -34,6 +34,8 @@ class RCLInterface(T32Interface):
     Available since TRACE32 build 172541."""
 
     def _get_config_string(self) -> str:
+        if self.protocol not in self._RCL_PROTOCOLS:
+            raise ValueError(f"protocol must be one of {list(self._RCL_PROTOCOLS)}")
         interface_name = self._RCL_PROTOCOLS[self.protocol]
         args = [
             f";T32 API Access ({self.protocol})",
