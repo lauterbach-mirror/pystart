@@ -531,11 +531,14 @@ class PowerView:
 def _wait_started_windows_signal(event_started: threading.Event, timeout: float) -> None:
     import ctypes
 
+    ctypes.windll.kernel32.CreateEventW.restype = ctypes.c_void_p
+    ctypes.windll.kernel32.WaitForSingleObject.argtypes = [ctypes.c_void_p, ctypes.c_uint32]
+    ctypes.windll.kernel32.WaitForSingleObject.restype = ctypes.c_uint32
     WAIT_TIMEOUT = 0x00000102
     WAIT_FAILED = 0xFFFFFFFF
 
-    event = ctypes.c_long(ctypes.windll.kernel32.CreateEventW(0, 0, 0, "T32_STARTUP_COMPLETED"))
-    assert event != ctypes.c_long(0), "no eventhandler was created"
+    event = ctypes.windll.kernel32.CreateEventW(0, 0, 0, "T32_STARTUP_COMPLETED")
+    assert event, "no eventhandler was created"
     rc = ctypes.windll.kernel32.WaitForSingleObject(event, int(timeout * 1000))
     if rc == WAIT_TIMEOUT:
         if event_started.is_set():
