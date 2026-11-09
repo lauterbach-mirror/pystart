@@ -299,15 +299,36 @@ class PowerView:
             else:
                 import ctypes
 
-                @ctypes.WINFUNCTYPE(ctypes.c_long, ctypes.c_ulong, ctypes.c_long)
+                ctypes.windll.user32.EnumWindows.argtypes = [
+                    ctypes.WINFUNCTYPE(ctypes.c_int, ctypes.c_void_p, ctypes.c_ssize_t),
+                    ctypes.c_ssize_t,
+                ]
+                ctypes.windll.user32.EnumWindows.restype = ctypes.c_int
+                ctypes.windll.user32.GetWindowThreadProcessId.argtypes = [
+                    ctypes.c_void_p,
+                    ctypes.POINTER(ctypes.c_uint32),
+                ]
+                ctypes.windll.user32.GetWindowThreadProcessId.restype = ctypes.c_uint32
+                ctypes.windll.user32.GetWindow.argtypes = [ctypes.c_void_p, ctypes.c_uint]
+                ctypes.windll.user32.GetWindow.restype = ctypes.c_void_p
+                ctypes.windll.user32.IsWindowVisible.argtypes = [ctypes.c_void_p]
+                ctypes.windll.user32.IsWindowVisible.restype = ctypes.c_int
+                ctypes.windll.user32.PostMessageA.argtypes = [
+                    ctypes.c_void_p,
+                    ctypes.c_uint,
+                    ctypes.c_size_t,
+                    ctypes.c_ssize_t,
+                ]
+                ctypes.windll.user32.PostMessageA.restype = ctypes.c_int
+
+                @ctypes.WINFUNCTYPE(ctypes.c_int, ctypes.c_void_p, ctypes.c_ssize_t)
                 def close_message_to_t32(hwnd, _):  # type: ignore
-                    hwnd = ctypes.c_ulong(hwnd)
-                    window_pid = ctypes.c_longlong()
+                    window_pid = ctypes.c_uint32()
                     ctypes.windll.user32.GetWindowThreadProcessId(hwnd, ctypes.byref(window_pid))
                     GW_OWNER = 4
                     if (
                         window_pid.value == self._process.pid  # type: ignore
-                        and ctypes.windll.user32.GetWindow(hwnd, GW_OWNER) == 0
+                        and not ctypes.windll.user32.GetWindow(hwnd, GW_OWNER)
                         and ctypes.windll.user32.IsWindowVisible(hwnd)
                     ):
                         WM_CLOSE = 0x0010
@@ -315,7 +336,7 @@ class PowerView:
                         ctypes.windll.user32.PostMessageA(hwnd, WM_CLOSE, 0, 0)
                     return 1
 
-                ctypes.windll.user32.EnumWindows(close_message_to_t32, None)
+                ctypes.windll.user32.EnumWindows(close_message_to_t32, 0)
         else:
             logger.debug("send SIGTERM to PowerView instance")
             self._process.terminate()
