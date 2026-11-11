@@ -1,7 +1,9 @@
 ## Change Log
 
-### upcoming
-* return Trace32's returncode
+### v0.7.0
+* return Trace32's returncode from `wait()`
+* keep `startup_parameter`, `connection_parameter` and `args` as `list`, so they can be used multiple times
+* raise `ValueError` for unsupported RCL protocol in `RCLInterface`
 
 ### v0.6.0
 * add parameter setting for `connection_script`.
