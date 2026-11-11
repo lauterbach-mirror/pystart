@@ -23,9 +23,10 @@ class RCLInterface(T32Interface):
     packlen: int = 1024
     """Specifies the maximum data package length for UDP. No operation for TCP."""
     protocol: str = "TCP"
-    """Starting from the TRACE32 release 09.2020, the API supports per default TCP socket
-    streams. Previous TRACE32 versions only support a communication via UDP
-    sockets."""
+    """``"TCP"`` (default) or ``"UDP"``.
+
+    Starting from the TRACE32 release 09.2020, the API supports per default TCP socket streams. Previous TRACE32
+    versions only support a communication via UDP sockets."""
     allow_remote_host: Optional[bool] = None
     """If set to `false`, only connections from `localhost` are allowed. If set to `true` also connections from remote
     hosts != localhost are allowed. If set to `None`, the default set in Trace32 is used.

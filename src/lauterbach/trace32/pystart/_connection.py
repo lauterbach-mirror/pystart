@@ -113,7 +113,7 @@ class ConnectMode(enum.Enum):
     NORMAL = enum.auto()
     """If PowerDebug device is already in use, warn user and close application after confirmation."""
     AUTOABORT = enum.auto()
-    """ If PowerDebug device is already in use, the TRACE32 executable will be closed automatically without any user
+    """If PowerDebug device is already in use, the TRACE32 executable will be closed automatically without any user
     interaction."""
     QUERYCONNECT = enum.auto()
     """If PowerDebug device is already in use, ask user if connection shall be forced."""
@@ -132,7 +132,7 @@ class ConnectMode(enum.Enum):
 class USBConnection(_PBIConnection):
     """Connection class for USB hardware debugger.
 
-    This Connection is a subtype of PBIConnection.
+    This Connection is a subtype of ``_PBIConnection``.
     """
 
     device_name: str = ""
@@ -178,7 +178,7 @@ class USBConnection(_PBIConnection):
 class UDPConnection(_PBIConnection):
     """Connection class for ethernet hardware debugger via UDP.
 
-    This Connection is a subtype of PBIConnection.
+    This Connection is a subtype of ``_PBIConnection``.
     """
 
     node_name: str
@@ -192,7 +192,7 @@ class UDPConnection(_PBIConnection):
     max_udp_packet_size: int = 1024
     """Limit the maximum UDP packet size."""
     packet_burst_limitation: bool = False
-    """Sends only very small packets."""
+    """If ``True``, send only very small packets."""
     compression: bool = False
     """If ``True`` reduces the packet size by compression."""
     delay: int = 0
@@ -243,7 +243,7 @@ class UDPConnection(_PBIConnection):
 class TCPConnection(_PBIConnection):
     """Connection class for ethernet hardware debugger via TCP.
 
-    This Connection is a subtype of PBIConnection and is only available for debugger from the X-Series.
+    This Connection is a subtype of ``_PBIConnection`` and is only available for debugger from the X-Series.
     """
 
     node_name: str
@@ -289,6 +289,8 @@ class TCPConnection(_PBIConnection):
 
 @dataclass
 class CitrixConnection(_PBIConnection):
+    """Connection class for hardware debugger via a Citrix server."""
+
     node_name: str = ""
     """The key value specifies the node name of the PowerDebug device to connect to. This should be either a DNS name or
     an IP address."""
@@ -367,8 +369,8 @@ class MCIServerConnection(_MultiConnection):
     and NODE in order to connect to the same MCI-server. The used port of the dedicated MCI-Server is passed by a
     command line parameter of t32mciserver[.exe]."""
     dedicated: bool = False
-    """Prohibits to start the integrated MCI-server when there is no response from an already started MCI-server at
-    localhost. Use this option when t32mciserver shall be started explicitly at localhost."""
+    """Prohibits PowerView from starting the integrated MCI server when there is no response from an already started
+    MCI server at localhost. Use this option when ``t32mciserver`` is started explicitly at localhost."""
 
     def __post_init__(self) -> None:
         super().__init__()
@@ -516,8 +518,7 @@ class CADIConnection(_SingleConnection):
     library_file: "PathType" = ""
     """Optional library file.
 
-    The library file is provided by Lauterbach and is installed together with TRACE32. Specifying a library file
-    (.dll) is optional
+    The library file is provided by Lauterbach and is installed together with TRACE32.
     """
 
     def __post_init__(self) -> None:
@@ -532,15 +533,14 @@ class CADIConnection(_SingleConnection):
 
 @dataclass
 class IRISConnection(_SingleConnection):
-    """TRACE32 to debug via the Arm Cycle Accurate Debug Interface.
+    """TRACE32 to debug via the Iris debug and trace interface for Arm Fast Models.
 
     Refer to “Virtual Targets User’s Guide” (virtual_targets.pdf) for more information."""
 
     library_file: "PathType" = ""
     """Optional library file.
 
-    The library file is provided by Lauterbach and is installed together with TRACE32. Specifying a library file
-    (.dll) is optional
+    The library file is provided by Lauterbach and is installed together with TRACE32.
     """
 
     def __post_init__(self) -> None:

@@ -277,7 +277,7 @@ class PowerView:
         return returncode
 
     def stop(self, timeout: Optional[float] = None) -> None:
-        """stops the process gently
+        """Stop the PowerView process gracefully.
 
         This function blocks until the process is stopped.
         When TRACE32 build number is below 165929, you are on Windows and screen is disabled, TRACE32 does not get
@@ -630,11 +630,12 @@ class Connection(ABC):
 class T32Interface(ABC):
     """An interface for several TRACE32 interfaces.
 
-    A T32Interface enables the use of TRACE32 as backend being controlled from an other process.
+    A T32Interface enables the use of TRACE32 as backend being controlled from another process.
     """
 
     @abstractmethod
     def _get_config_string(self) -> str:
+        """Return the interface-specific part of a TRACE32 config file"""
         pass
 
     @classmethod
@@ -647,6 +648,8 @@ class T32Interface(ABC):
 # Screen setting types:
 ####################
 class FontSize(enum.Enum):
+    """Enumeration of the available font sizes."""
+
     SMALL = "SMALL"
     MEDIUM = "MEDIUM"
     LARGE = "LARGE"
@@ -694,18 +697,20 @@ class Palette(enum.Enum):
 
 
 class WindowMode(enum.Enum):
+    """Enumeration of how child windows appear."""
+
     MDI = "MDI"
     """Multiple Document Interface (default).
         All child windows appear inside the TRACE32 main window.
     """
     FDI = "FDI"
     """Floating Document Interface.
-        All child windows can be placed on any position on the desktop independently form the main window. Minimizing
+        All child windows can be placed on any position on the desktop independently from the main window. Minimizing
         the main window, minimizes also the child windows. Only the main window appears in the task bar.
     """
     MTI = "MTI"
     """Multiple Top-level window Interface
-        All child windows can be placed on any position on the desktop independently form the main window. Minimizing
+        All child windows can be placed on any position on the desktop independently from the main window. Minimizing
         the main window, minimizes none of the child windows. Both the main and all child windows appear in the task
         bar.
     """
@@ -715,6 +720,8 @@ class WindowMode(enum.Enum):
 
 
 class Language(enum.Enum):
+    """Enumeration of the available languages."""
+
     ENGLISH = "EN"
     JAPANESE = "JP"
 
